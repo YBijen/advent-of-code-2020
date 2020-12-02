@@ -45,8 +45,10 @@ namespace AdventOfCode.Solutions
             
             foreach(int day in days)
             {
-                var solution = Type.GetType($"AdventOfCode.Solutions.Year{year}.Day{day.ToString("D2")}");
-                if(solution != null)
+                var typeString = $"AdventOfCode.Solutions.Year{year}.Day{day.ToString("D2")}";
+                var solution = Type.GetType(typeString) ?? Type.GetType(typeString + "Solution");
+
+                if (solution != null)
                 {
                     yield return (ASolution)Activator.CreateInstance(solution);
                 }
