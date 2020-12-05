@@ -1,7 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AdventOfCode.Solutions.Year2020
 {
@@ -20,54 +19,91 @@ namespace AdventOfCode.Solutions.Year2020
             ("cid", false)
         };
 
-        public Day04() : base(04, 2020, "")
+        private List<string> _possibleEyeColors = new List<string>
         {
-            base.DebugInput = "" +
-                "ecl:gry pid:860033327 eyr:2020 hcl:#fffffd\n" +
-                "byr:1937 iyr:2017 cid:147 hgt:183cm\n" +
-                "\n" +
-                "iyr:2013 ecl:amb cid:350 eyr:2023 pid:028048884\n" +
-                "hcl:#cfa07d byr:1929\n" +
-                "\n" +
-                "hcl:#ae17e1 iyr:2013\n" +
-                "eyr:2024\n" +
-                "ecl:brn pid:760753108 byr:1931\n" +
-                "hgt:179cm\n" +
-                "\n" +
-                "hcl:#cfa07d eyr:2025 pid:166559648\n" +
-                "iyr:2011 ecl:brn hgt:59in";
-        }
+            "amb",
+            "blu",
+            "brn",
+            "gry",
+            "grn",
+            "hzl",
+            "oth"
+        };
+
+        public Day04() : base(04, 2020, "") { }
 
         private string[] GetPassportsFromInput() => base.Input.Split("\n\n");
 
-        protected override string SolvePartOne()
-        {
-            return GetPassportsFromInput()
-                .Count(passport => _fieldList
-                    .Where(field => field.IsRequired)
-                    .All(field => passport.Contains(field.Name))
-                    )
-                .ToString();
-        }
+        private IEnumerable<string> GetPassportsWithAllRequiredProperties() => GetPassportsFromInput()
+            .Where(passport => _fieldList
+                .Where(field => field.IsRequired)
+                .All(field => passport.Contains(field.Name))
+                );
 
-        protected override string SolvePartTwo()
-        {
-            foreach(var p in GetPassportsFromInput())
-            {
-                IsPassportValid(p);
-            }
-            return null;
-        }
+        protected override string SolvePartOne() => GetPassportsWithAllRequiredProperties().Count().ToString();
+
+        protected override string SolvePartTwo() => GetPassportsWithAllRequiredProperties()
+                .Count(passport => IsPassportValid(passport))
+                .ToString();
 
         private bool IsPassportValid(string passport)
         {
-            Console.WriteLine("========================");
-            foreach(var kvp in passport.Replace('\n', ' ').Split(' '))
+            var passportKeyValuePairs = passport.Replace('\n', ' ').Split(' ');
+            return passportKeyValuePairs.All(kvp =>
             {
-                Console.WriteLine(kvp);
+                var key = kvp.Split(':')[0];
+                var value = kvp.Split(':')[1];
+                return IsKeyValuePairValid(key, value);
+            });
+        }
+
+        private bool IsKeyValuePairValid(string key, string value)
+        {
+            int.TryParse(value, out var intValue);
+            if (key == "byr")
+            {
+                return intValue >= 1920 && intValue <= 2002;
             }
-            Console.WriteLine("========================");
-            return false;
+            else if (key == "iyr")
+            {
+                return intValue >= 2010 && intValue <= 2020;
+            }
+            else if (key == "eyr")
+            {
+                return intValue >= 2020 && intValue <= 2030;
+            }
+            else if (key == "hgt" && value.Contains("cm"))
+            {
+                value = value.Replace("cm", "");
+                intValue = int.Parse(value);
+                return intValue >= 150 && intValue <= 193;
+            }
+            else if (key == "hgt" && value.Contains("in"))
+            {
+                value = value.Replace("in", "");
+                intValue = int.Parse(value);
+                return intValue >= 59 && intValue <= 76;
+            }
+            else if(key == "hcl")
+            {
+                return Regex.IsMatch(value, "#[a-f0-9]{6}");
+            }
+            else if(key == "ecl")
+            {
+                return _possibleEyeColors.Contains(value);
+            }
+            else if(key == "pid")
+            {
+                return value.Length == 9 && intValue != 0;
+            }
+            else if(key == "cid")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
