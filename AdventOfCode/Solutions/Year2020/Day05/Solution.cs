@@ -16,9 +16,9 @@ namespace AdventOfCode.Solutions.Year2020
             //base.DebugInput = "FBFBBFFRLR\nBFFFBBFRRR\nFFFBBBFRRR\nBBFFBBFRLL";
         }
 
-        protected override string SolvePartOne() => base.Input.SplitByNewline().Max(CalculateSeatIdForBoardingPass).ToString();
+        protected override string SolvePartOne() => base.Input.SplitByNewline().Max(CalculateSeatInfoForBoardingPass).SeatId.ToString();
 
-        private int CalculateSeatIdForBoardingPass(string boardingPass)
+        private (int Row, int Column, int SeatId) CalculateSeatInfoForBoardingPass(string boardingPass)
         {
             var row = 0;
             var rowMin = 0;
@@ -57,7 +57,7 @@ namespace AdventOfCode.Solutions.Year2020
 
             var seatId = row * 8 + column;
             //Console.WriteLine($"Row: {row} && Column: {column} && SeatId: {seatId}");
-            return seatId;
+            return (row, column, seatId);
         }
 
         private (int min, int max) CalculateNewRange(int min, int max, char input)
@@ -74,7 +74,21 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartTwo()
         {
-            return null;
+            var rowWithOneEmptySeat = base.Input.SplitByNewline().Select(CalculateSeatInfoForBoardingPass)
+                .GroupBy(info => info.Row)
+                .FirstOrDefault(rowGroups => rowGroups.Count() == 7);
+            foreach(var column in Enumerable.Range(0, 8))
+            {
+                var hasSeatWithColumn = rowWithOneEmptySeat.Any(info => info.Column == column);
+                if(hasSeatWithColumn)
+                {
+                    continue;
+                }
+
+                return (rowWithOneEmptySeat.Key * 8 + column).ToString();
+            }
+
+            throw new Exception("Could not find my seat.");
         }
     }
 }
