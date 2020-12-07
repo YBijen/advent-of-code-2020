@@ -70,11 +70,17 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartTwo()
         {
+            _luggageRules
+                .Select(b => new { Bag = b.Key, Contains = CountBagsInBag(b.Key) })
+                .OrderBy(r => r.Contains)
+                .ToList()
+                .ForEach(r => Console.WriteLine($"[{r.Bag}] {r.Contains}"));
+
             var bagsInGivenBag = CountBagsInBag(BAG_SHINY_GOLD);
             return (bagsInGivenBag - 1).ToString();
         }
 
-        private int CountBagsInBag(string bag)
+        private long CountBagsInBag(string bag)
         {
             var amountOfBagsInContainedBags = _luggageRules[bag].Sum(b => CountBagsInBag(b.Key) * b.Value);
             return amountOfBagsInContainedBags > 0 ? amountOfBagsInContainedBags + 1 : 1;
