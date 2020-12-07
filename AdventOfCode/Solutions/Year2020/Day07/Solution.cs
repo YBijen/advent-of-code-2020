@@ -76,13 +76,6 @@ namespace AdventOfCode.Solutions.Year2020
 
         private int CountBagsInBag(string bag)
         {
-            //var count = 0;
-            //var containedBags = _luggageRules[bag];
-            //foreach(var b in containedBags)
-            //{
-            //    count += CountBagsInBag(b.Key) * b.Value;
-            //}
-
             var amountOfBagsInContainedBags = _luggageRules[bag].Sum(b => CountBagsInBag(b.Key) * b.Value);
             return amountOfBagsInContainedBags > 0 ? amountOfBagsInContainedBags + 1 : 1;
         }
