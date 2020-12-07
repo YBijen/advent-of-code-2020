@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -14,6 +15,7 @@ namespace AdventOfCode.Solutions.Year2020
         public Day07() : base(07, 2020, "")
         {
             _luggageRules = ParseLuggageRules();
+            Extra();
         }
 
         private void SetDebugInputPart1()
@@ -44,7 +46,6 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartOne()
         {
-            //SetDebugInputPart1();
             var checkedBags = 0;
             var alreadyChecked = new List<string>();
             var bagsToFind = new List<string> { BAG_SHINY_GOLD };
@@ -70,14 +71,59 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartTwo()
         {
-            _luggageRules
-                .Select(b => new { Bag = b.Key, Contains = CountBagsInBag(b.Key) })
-                .OrderBy(r => r.Contains)
-                .ToList()
-                .ForEach(r => Console.WriteLine($"[{r.Bag}] {r.Contains}"));
-
             var bagsInGivenBag = CountBagsInBag(BAG_SHINY_GOLD);
             return (bagsInGivenBag - 1).ToString();
+        }
+
+        private void Extra()
+        {
+            Console.WriteLine("== Method 1 ==");
+            var sw1 = Stopwatch.StartNew();
+            var methodOne = _luggageRules.ToDictionary(kvp => kvp.Key, kvp => CountBagsInBag(kvp.Key) - 1);
+            sw1.Stop();
+            Console.WriteLine($"Took {sw1.Elapsed}");
+
+            Console.WriteLine("== Method 2 ==");
+            var sw2 = Stopwatch.StartNew();
+            var methodTwo = BuildBagCountFromBottom();
+            sw2.Stop();
+            Console.WriteLine($"Took {sw2.Elapsed}");
+
+            Console.WriteLine();
+            Console.WriteLine($"Method 2 is {sw1.ElapsedMilliseconds / sw2.ElapsedMilliseconds} times faster than method 1.");
+
+            var areEqual = methodOne.All(methodOneKvp => methodTwo[methodOneKvp.Key] == methodOneKvp.Value);
+            Console.WriteLine($"The two methods {(areEqual ? "ARE" : " ARE NOT ")} providing the same result");
+        }
+
+        /// <summary>
+        /// Build a lookup of all the bags with the amount of bags it contains next to it
+        /// Starts from the bottom and moves to the top
+        /// </summary>
+        /// <returns></returns>
+        private Dictionary<string, long> BuildBagCountFromBottom()
+        {
+            var result = new Dictionary<string, long>();
+            while(result.Count < _luggageRules.Count)
+            {
+                foreach (var rule in _luggageRules)
+                {
+                    if(result.ContainsKey(rule.Key))
+                    {
+                        continue;
+                    }
+
+                    if(rule.Value.Count == 0)
+                    {
+                        result.Add(rule.Key, 0);
+                    }
+                    else if(rule.Value.All(kvp => result.ContainsKey(kvp.Key)))
+                    {
+                        result.Add(rule.Key, rule.Value.Sum(kvp => (result[kvp.Key] * kvp.Value) + kvp.Value));
+                    }
+                }
+            }
+            return result;
         }
 
         private long CountBagsInBag(string bag)
