@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using AdventOfCode.Solutions.Year2020.Day08.Models;
 
 namespace AdventOfCode.Solutions.Year2020
@@ -11,7 +10,7 @@ namespace AdventOfCode.Solutions.Year2020
         private int _accumulator;
         private HashSet<int> _processedIndexes;
 
-        private readonly List<(Operation operation, int modifier)> _bootCode;
+        private List<(Operation Operation, int Modifier)> _bootCode;
 
         public Day08Solution() : base(08, 2020, "")
         {
@@ -21,27 +20,70 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartOne()
         {
-            ResetGlobals();
-
-            int index = 0;
-            while(true)
-            {
-                _processedIndexes.Add(index);
-                var (operation, modifier) = _bootCode[index];
-
-                index += PerformOperation(operation, modifier);
-                if(_processedIndexes.Contains(index))
-                {
-                    break;
-                }
-            }
-
+            RunProgram();
             return _accumulator.ToString();
         }
 
         protected override string SolvePartTwo()
         {
-            return null;
+            // Run the program once, this fails and sets the required global values
+            RunProgram();
+
+            var originalBootcode = new List<(Operation Operation, int Modifier)>(_bootCode);
+            var originalProcessedIndexes = new HashSet<int>(_processedIndexes);
+
+            foreach(var processedIndex in originalProcessedIndexes)
+            {
+                // Restore program
+                _bootCode = new List<(Operation Operation, int Modifier)>(originalBootcode);
+
+                switch(originalBootcode[processedIndex].Operation)
+                {
+                    case Operation.jmp:
+                        _bootCode[processedIndex] = (Operation.nop, _bootCode[processedIndex].Modifier);
+                        break;
+                    case Operation.nop:
+                        _bootCode[processedIndex] = (Operation.jmp, _bootCode[processedIndex].Modifier);
+                        break;
+                    case Operation.acc:
+                    default:
+                        continue;
+                }
+
+                if(RunProgram())
+                {
+                    return _accumulator.ToString();
+                }
+            }
+
+            throw new Exception("Could not find any bug in the bootcode");
+        }
+
+        /// <summary>
+        /// Run the program
+        /// </summary>
+        /// <returns>True if the program ended succesfully, false if an operation was about to run twice</returns>
+        protected bool RunProgram()
+        {
+            ResetGlobals();
+
+            int index = 0;
+            while (true)
+            {
+                _processedIndexes.Add(index);
+                var (operation, modifier) = _bootCode[index];
+
+                index += PerformOperation(operation, modifier);
+                if (_processedIndexes.Contains(index))
+                {
+                    return false;
+                }
+
+                if (index >= _bootCode.Count)
+                {
+                    return true;
+                }
+            }
         }
 
         /// <summary>
@@ -69,7 +111,7 @@ namespace AdventOfCode.Solutions.Year2020
             return indexModifier;
         }
 
-        private (Operation operation, int modifier) ParseInputLine(string inputLine)
+        private (Operation Operation, int Modifier) ParseInputLine(string inputLine)
         {
             var splittedLine = inputLine.Split(' ');
             if (!Enum.TryParse(splittedLine[0], out Operation operation)
