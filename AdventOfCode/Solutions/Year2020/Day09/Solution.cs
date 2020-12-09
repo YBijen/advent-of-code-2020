@@ -20,39 +20,21 @@ namespace AdventOfCode.Solutions.Year2020
         protected override string SolvePartTwo()
         {
             var invalidNumber = FindInvalidNumber();
+            var numbers = Enumerable.Empty<int>();
 
-            for(var i = 0; i < _data.Length; i++)
+            for (var i = 0; i < _data.Length; i++)
             {
-                if(_data[i] == invalidNumber)
-                {
-                    throw new Exception("Something went wrong, we went too deep in the data.");
-                }
-
-                var currentValue = _data[i];
-
-                // Keep track of the Smallest and Largest values to find the Encryption Weakness
-                var smallestValue = currentValue;
-                var largestValue = currentValue;
-
+                var currentValue = 0;
                 var currentLoop = 0;
                 while(currentValue < invalidNumber)
                 {
-                    var nextValue = _data[i + ++currentLoop];
-                    currentValue += nextValue;
-
-                    if(nextValue < smallestValue)
-                    {
-                        smallestValue = nextValue;
-                    }
-                    if(nextValue > largestValue)
-                    {
-                        largestValue = nextValue;
-                    }
+                    numbers = _data.Skip(i).Take(++currentLoop);
+                    currentValue = numbers.Sum();
                 }
 
                 if(currentValue == invalidNumber)
                 {
-                    return (smallestValue + largestValue).ToString();
+                    return (numbers.Min() + numbers.Max()).ToString();
                 }
             }
 
