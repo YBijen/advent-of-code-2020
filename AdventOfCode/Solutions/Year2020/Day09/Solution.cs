@@ -11,18 +11,62 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day09() : base(09, 2020, "")
         {
-           // SetDebugInput();
+            //SetDebugInput();
             _data = base.Input.ToIntArray("\n");
         }
 
-        protected override string SolvePartOne()
+        protected override string SolvePartOne() => FindInvalidNumber().ToString();
+
+        protected override string SolvePartTwo()
         {
-            for(var i = _preamble; i < _data.Length; i++)
+            var invalidNumber = FindInvalidNumber();
+
+            for(var i = 0; i < _data.Length; i++)
+            {
+                if(_data[i] == invalidNumber)
+                {
+                    throw new Exception("Something went wrong, we went too deep in the data.");
+                }
+
+                var currentValue = _data[i];
+
+                // Keep track of the Smallest and Largest values to find the Encryption Weakness
+                var smallestValue = currentValue;
+                var largestValue = currentValue;
+
+                var currentLoop = 0;
+                while(currentValue < invalidNumber)
+                {
+                    var nextValue = _data[i + ++currentLoop];
+                    currentValue += nextValue;
+
+                    if(nextValue < smallestValue)
+                    {
+                        smallestValue = nextValue;
+                    }
+                    if(nextValue > largestValue)
+                    {
+                        largestValue = nextValue;
+                    }
+                }
+
+                if(currentValue == invalidNumber)
+                {
+                    return (smallestValue + largestValue).ToString();
+                }
+            }
+
+            throw new Exception("An encryption weakness could not be found.");
+        }
+
+        private int FindInvalidNumber()
+        {
+            for (var i = _preamble; i < _data.Length; i++)
             {
                 var numbers = _data.Skip(i - _preamble).Take(_preamble).ToArray();
-                if(!AreAnyPairOfNumbersEqualTo(numbers, _data[i]))
+                if (!AreAnyPairOfNumbersEqualTo(numbers, _data[i]))
                 {
-                    return _data[i].ToString();
+                    return _data[i];
                 }
             }
 
@@ -48,11 +92,6 @@ namespace AdventOfCode.Solutions.Year2020
             }
 
             return false;
-        }
-
-        protected override string SolvePartTwo()
-        {
-            return null;
         }
 
         #region DebugInput
