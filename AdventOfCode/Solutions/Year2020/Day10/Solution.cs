@@ -87,6 +87,7 @@ namespace AdventOfCode.Solutions.Year2020
         /// <summary>
         /// The amount of Possibilities were counted by hand on paper
         /// TODO: I have to read up on how to find the unique possibilities for each amount
+        /// For Future reference: this is a Tribonacci number
         /// </summary>
         /// <param name="chainLength"></param>
         /// <returns></returns>
