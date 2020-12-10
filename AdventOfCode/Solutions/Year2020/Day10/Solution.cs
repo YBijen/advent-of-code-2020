@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace AdventOfCode.Solutions.Year2020
 {
@@ -14,13 +13,22 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartOne()
         {
-            var adapters = base.Input.ToIntArray("\n").OrderBy(i => i).ToList();
+            var joltDifferences = GetJoltDifferencesForAdapters();
+            return (joltDifferences.Count(diff => diff == 1) * joltDifferences.Count(diff => diff == 3)).ToString();
+        }
 
-            // Add the charging outlet
-            adapters.Insert(0, 0);
-            // Add the device
-            adapters.Add(adapters.Max() + 3);
+        protected override string SolvePartTwo()
+        {
+            var joltDifferences = GetJoltDifferencesForAdapters();
+            var chainOfOneDifferences = FindChainOfOneJoltDifference(joltDifferences);
+            var amountOfCombinations = chainOfOneDifferences.Aggregate(1L, (v1, v2) => v1 * CalculatePossibilities(v2));
+            return amountOfCombinations.ToString();
+        }
 
+        private List<int> GetJoltDifferencesForAdapters() => GetJoltDifferencesForAdapters(GetAdapters());
+
+        private List<int> GetJoltDifferencesForAdapters(List<int> adapters)
+        {
             var joltDifferences = new List<int>();
             for (var i = 0; i < adapters.Count - 1; i++)
             {
@@ -28,18 +36,43 @@ namespace AdventOfCode.Solutions.Year2020
             }
 
             // Sanity check
-            if(!joltDifferences.All(diff => diff >= 1 || diff <= 3))
+            if (!joltDifferences.All(difference => difference == 1 || difference == 3))
             {
                 throw new Exception($"Something went wrong in calculating the differences or the input does not support this method.");
             }
 
-            Console.WriteLine(string.Join("|", adapters.Select(x => x.ToString("00"))));
-            Console.WriteLine(" " + string.Join("|", joltDifferences.Select(x => x.ToString("00"))));
-
-            return (joltDifferences.Count(diff => diff == 1) * joltDifferences.Count(diff => diff == 3)).ToString();
+            return joltDifferences;
         }
 
-        protected override string SolvePartTwo()
+        /// <summary>
+        /// Find all chained jolt differences of "1"
+        /// Only return those that are chained by more than 1
+        /// </summary>
+        /// <param name="joltDifferences"></param>
+        /// <returns></returns>
+        private List<int> FindChainOfOneJoltDifference(List<int> joltDifferences)
+        {
+            var chainOfOneDifferences = new List<int>();
+            var currentChain = 0;
+            foreach (var difference in joltDifferences)
+            {
+                if (difference == 1)
+                {
+                    currentChain++;
+                }
+                else if (difference == 3)
+                {
+                    if (currentChain > 1)
+                    {
+                        chainOfOneDifferences.Add(currentChain);
+                    }
+                    currentChain = 0;
+                }
+            }
+            return chainOfOneDifferences;
+        }
+
+        private List<int> GetAdapters()
         {
             var adapters = base.Input.ToIntArray("\n").OrderBy(i => i).ToList();
 
@@ -48,52 +81,15 @@ namespace AdventOfCode.Solutions.Year2020
             // Add the device
             adapters.Add(adapters.Max() + 3);
 
-            var joltDifferences = new List<int>();
-            for (var i = 0; i < adapters.Count - 1; i++)
-            {
-                joltDifferences.Add(adapters[i + 1] - adapters[i]);
-            }
-
-            if(joltDifferences.Contains(2))
-            {
-                throw new Exception("This method is probably not working for a difference of 2");
-            }
-
-            var chainOfOneDifferences = new List<int>();
-            var currentChain = 0;
-            foreach(var difference in joltDifferences)
-            {
-                if(difference == 1)
-                {
-                    currentChain++;
-                }
-                else if(difference == 3)
-                {
-                    if(currentChain > 1)
-                    {
-                        chainOfOneDifferences.Add(currentChain);
-                    }
-                    currentChain = 0;
-                }
-            }
-
-            Console.WriteLine($"Chains: " + string.Join("|", chainOfOneDifferences));
-
-            long r = 1;
-            foreach(var x in chainOfOneDifferences)
-            {
-                r *= CalculatePossibilities(x);
-            }
-            Console.WriteLine("R: " + r);
-            //Console.WriteLine(chainOfOneDifferences.Aggregate((v1, v2) => CalculatePossibilities(v1)));
-
-            //var differenceChain
-
-            // 1672417280 == too low
-            // Long = 1157018619904
-            return null;
+            return adapters;
         }
 
+        /// <summary>
+        /// The amount of Possibilities were counted by hand on paper
+        /// TODO: I have to read up on how to find the unique possibilities for each amount
+        /// </summary>
+        /// <param name="chainLength"></param>
+        /// <returns></returns>
         private int CalculatePossibilities(int chainLength) => chainLength switch
         {
             2 => 2,
