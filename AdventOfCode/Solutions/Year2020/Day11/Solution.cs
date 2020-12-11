@@ -18,13 +18,8 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartOne()
         {
-            while(true)
-            {
-                if (!PerformSeatRound())
-                {
-                    return _seats.Values.Count(v => v).ToString();
-                }
-            }
+            while (PerformSeatRound()) { }
+            return _seats.Values.Count(v => v).ToString();
         }
 
         protected override string SolvePartTwo()
