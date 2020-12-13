@@ -12,6 +12,7 @@ namespace AdventOfCode.Solutions.Year2020
         private List<(Direction Direction, int Value)> _instructions;
         private Direction _currentDirection = Direction.E;
         private (int X, int Y) _currentLocation = (0, 0);
+        private (int X, int Y) _waypoint = (10, 1);
 
         public Day12Solution() : base(12, 2020, "")
         {
@@ -21,6 +22,7 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartOne()
         {
+            ResetGlobals();
             foreach (var instr in _instructions)
             {
                 switch(instr.Direction)
@@ -49,12 +51,6 @@ namespace AdventOfCode.Solutions.Year2020
             _ => throw new Exception("Invalid direction for this method")
         };
 
-        protected override string SolvePartTwo()
-        {
-            return null;
-        }
-
-
         private void MakeTurn(Direction direction, int value)
         {
             var indexModifier = value / 90;
@@ -78,10 +74,64 @@ namespace AdventOfCode.Solutions.Year2020
             }
 
             throw new Exception("This should not happen");
-
         }
 
+        protected override string SolvePartTwo()
+        {
+            ResetGlobals();
+            foreach (var instr in _instructions)
+            {
+                switch (instr.Direction)
+                {
+                    case Direction.L:
+                    case Direction.R:
+                        RotateWaypoint(instr.Direction, instr.Value);
+                        break;
+                    case Direction.F:
+                        _currentLocation = GetNewLocationAfterMovingToWaypoint(instr.Value);
+                        break;
+                    default:
+                        _waypoint = UpdateWaypoint(instr.Direction, instr.Value);
+                        break;
+                }
+            }
+            return (Math.Abs(_currentLocation.X) + Math.Abs(_currentLocation.Y)).ToString();
+        }
 
+        private (int X, int Y) GetNewLocationAfterMovingToWaypoint(int timesToMove)
+        {
+            var newX = _currentLocation.X + (_waypoint.X * timesToMove);
+            var newY = _currentLocation.Y + (_waypoint.Y * timesToMove);
+            return (newX, newY);
+        }
+
+        private (int X, int Y) UpdateWaypoint(Direction direction, int value) => direction switch
+        {
+            Direction.N => (_waypoint.X, _waypoint.Y + value),
+            Direction.E => (_waypoint.X + value, _waypoint.Y),
+            Direction.S => (_waypoint.X, _waypoint.Y - value),
+            Direction.W => (_waypoint.X - value, _waypoint.Y),
+            _ => throw new Exception("Invalid direction for this method")
+        };
+
+        private void RotateWaypoint(Direction direction, int value)
+        {
+            if(value == 0)
+            {
+                return;
+            }
+
+            if (direction == Direction.R)
+            {
+                _waypoint = (_waypoint.Y, _waypoint.X * -1);
+            }
+            else if (direction == Direction.L)
+            {
+                _waypoint = (_waypoint.Y * -1, _waypoint.X);
+            }
+
+            RotateWaypoint(direction, value - 90);
+        }
 
         private void ParseInput()
         {
@@ -97,6 +147,13 @@ namespace AdventOfCode.Solutions.Year2020
         private void SetDebugInput()
         {
             base.DebugInput = "F10\nN3\nF7\nR90\nF11";
+        }
+
+        private void ResetGlobals()
+        {
+            _currentDirection = Direction.E;
+            _currentLocation = (0, 0);
+            _waypoint = (10, 1);
         }
     }
 }
