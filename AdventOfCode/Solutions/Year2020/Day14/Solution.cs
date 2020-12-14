@@ -10,24 +10,24 @@ namespace AdventOfCode.Solutions.Year2020
     {
         private const int BIT_LENGTH = 36;
         private List<MaskMemoryModel> _program;
-        private long[] _memory;
 
         public Day14Solution() : base(14, 2020, "")
         {
             //SetDebugInput();
+            //SetDebugInput2();
             _program = ParseInput().ToList();
-
-            var maxMemoryValue = _program.SelectMany(p => p.MemoryAdjustements.Select(ma => ma.Index)).Max();
-            _memory = new long[maxMemoryValue + 1];
         }
 
         protected override string SolvePartOne()
         {
-            foreach(var p in _program)
+            var maxMemoryValue = _program.SelectMany(p => p.MemoryAdjustements.Select(ma => ma.Index)).Max();
+            long[] memory = new long[maxMemoryValue + 1];
+
+            foreach (var p in _program)
             {
                 foreach(var memoryAdjustement in p.MemoryAdjustements)
                 {
-                    var strValue = Convert.ToString(memoryAdjustement.Value, 2).PadLeft(BIT_LENGTH, '0');
+                    var strValue = ConvertIntToBitString(memoryAdjustement.Value);
                     foreach(var m in p.Mask)
                     {
                         if(m.Character == 'X')
@@ -35,19 +35,95 @@ namespace AdventOfCode.Solutions.Year2020
                             continue;
                         }
 
-                        strValue = new StringBuilder(strValue).Replace(strValue[m.Index], m.Character, m.Index, 1).ToString();
+                        strValue = ReplaceCharInString(strValue, m.Index, m.Character);
                     }
                     var intValue = Convert.ToInt64(strValue, 2);
-                    _memory[memoryAdjustement.Index] = intValue;
+                    memory[memoryAdjustement.Index] = intValue;
                 }
             }
 
-            return _memory.Sum().ToString();
+            return memory.Sum().ToString();
         }
+
+        private string ConvertIntToBitString(long value) => Convert.ToString(value, 2).PadLeft(BIT_LENGTH, '0');
+
+        private string ReplaceCharInString(string str, int index, char character) =>
+            new StringBuilder(str).Replace(str[index], character, index, 1).ToString();
 
         protected override string SolvePartTwo()
         {
-            return null;
+            var memory = new Dictionary<long, long>();
+
+            foreach (var p in _program)
+            {
+                foreach (var memoryAdjustement in p.MemoryAdjustements)
+                {
+                    var strValue = ConvertIntToBitString(memoryAdjustement.Index);
+                    foreach (var m in p.Mask)
+                    {
+                        switch(m.Character)
+                        {
+                            case '1':
+                            case 'X':
+                                strValue = ReplaceCharInString(strValue, m.Index, m.Character);
+                                break;
+                            case '0':
+                            default:
+                                continue;
+
+                        }
+                    }
+
+                    var amountOfFloats = strValue.Count(c => c == 'X');
+                    foreach(var replacement in CreatePossibilities(new List<string>(), amountOfFloats))
+                    {
+                        var adjustAtIndexString = strValue;
+
+                        foreach(var c in replacement)
+                        {
+                            adjustAtIndexString = ReplaceCharInString(adjustAtIndexString, adjustAtIndexString.IndexOf('X'), c);
+                        }
+
+                        var adjustAtIndexLong = Convert.ToInt64(adjustAtIndexString, 2);
+
+                        if(memory.ContainsKey(adjustAtIndexLong))
+                        {
+                            memory[adjustAtIndexLong] = memoryAdjustement.Value;
+                        }
+                        else
+                        {
+                            memory.Add(adjustAtIndexLong, memoryAdjustement.Value);
+                        }
+                    }
+                }
+            }
+
+            return memory.Values.Sum().ToString();
+        }
+
+        private List<string> CreatePossibilities(List<string> possibilities, int count)
+        {
+            if(count == 0)
+            {
+                return possibilities;
+            }
+
+            if(possibilities.Count == 0)
+            {
+                possibilities.Add("0");
+                possibilities.Add("1");
+                return CreatePossibilities(possibilities, --count);
+            }
+            else
+            {
+                var currentPossibilitiesCount = possibilities.Count;
+                for(var i = 0; i < currentPossibilitiesCount; i++)
+                {
+                    possibilities.Add("0" + possibilities[i]);
+                    possibilities.Add("1" + possibilities[i]);
+                }
+                return CreatePossibilities(possibilities.Skip(currentPossibilitiesCount).ToList(), --count);
+            }
         }
 
         private IEnumerable<MaskMemoryModel> ParseInput()
@@ -78,6 +154,15 @@ namespace AdventOfCode.Solutions.Year2020
                 "mem[8] = 11\n" +
                 "mem[7] = 101\n" +
                 "mem[8] = 0";
+        }
+
+        private void SetDebugInput2()
+        {
+            base.DebugInput = "" +
+                "mask = 000000000000000000000000000000X1001X\n" +
+                "mem[42] = 100\n" +
+                "mask = 00000000000000000000000000000000X0XX\n" +
+                "mem[26] = 1";
         }
     }
 }
