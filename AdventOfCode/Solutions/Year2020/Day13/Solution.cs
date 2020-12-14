@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdventOfCode.Solutions.Year2020
@@ -14,6 +12,8 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day13() : base(13, 2020, "")
         {
+            //DrawSchedule();
+            //SetDebugInput(0);
             //AssertDebugInputsPart2();
             SetGlobalsFromInput();
         }
@@ -35,26 +35,29 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartTwo()
         {
-            Console.WriteLine($"Starting part 2...");
-            var sw = Stopwatch.StartNew();
-            var validTimes = 1;
-            long currentTime = 100000000000000;
-            while(validTimes < _busIds.Count)
+            // Initalize
+            long time = 0;
+            long currentIncrement = _busIds[0].busId;
+            var solvedBusCount = 1;
+            var busToCheck = _busIds[1];
+
+            while (true)
             {
-                validTimes = 1;
-                currentTime += _busIds[0].busId;
-                foreach (var currentBus in _busIds.Skip(1).AsParallel())
+                time += currentIncrement;
+
+                if(busToCheck.busId - (time % busToCheck.busId) == (busToCheck.departOffset % busToCheck.busId))
                 {
-                    var currentBusId = currentBus.busId;
-                    var timeToWait = currentBusId - (currentTime % currentBusId);
-                    if(currentBus.departOffset == timeToWait)
+                    if(_busIds.Count - 1 == solvedBusCount)
                     {
-                        validTimes++;
+                        break;
                     }
+
+                    currentIncrement *= busToCheck.busId;
+                    busToCheck = _busIds[++solvedBusCount];
                 }
             }
-            Console.WriteLine($"Took {sw.Elapsed}");
-            return currentTime.ToString();
+
+            return time.ToString();
         }
 
         private void SetGlobalsFromInput()
@@ -99,6 +102,22 @@ namespace AdventOfCode.Solutions.Year2020
                     throw new Exception("The input number is invalid");
             }
         }
+
+        private void DrawSchedule()
+        {
+            var loopsNeeded = 170;
+            //var bus = new List<(int id, int offset)> { (3, 0), (5, 1), (7, 2) };
+            //var bus = new List<(int id, int offset)> { (17, 0), (13, 2), (19, 3) };
+            var bus = new List<(int id, int offset)> { (7, 0), (13, 1), (59, 4), (31, 6), (19, 7) };
+
+            Console.WriteLine($"Time\t{string.Join("\t", bus.Select(b => "bus " + b.id))}");
+            for (var i = 0; i <= loopsNeeded; i++)
+            {
+                Console.WriteLine($"{i.ToString("0000")}:\t  {string.Join("\t  ", bus.Select(b => DoesDepart(b, i) ? "D" : "."))}");
+            }
+        }
+
+        private bool DoesDepart((int id, int offset) bus, int time) => time == 0 || time % bus.id == 0;
 
         private void AssertDebugInputsPart2()
         {
