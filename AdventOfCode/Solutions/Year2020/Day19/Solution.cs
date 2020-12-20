@@ -17,14 +17,11 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day19() : base(19, 2020, "")
         {
-            AssertDebugInput();
+            //AssertDebugInput();
             Initialize();
         }
 
-        protected override string SolvePartOne()
-        {
-            return null;
-        }
+        protected override string SolvePartOne() => _processedRules[0].Count(x => _messages.Contains(x)).ToString();
 
         protected override string SolvePartTwo()
         {
@@ -42,6 +39,15 @@ namespace AdventOfCode.Solutions.Year2020
                     // Haal de startwaarden op van de eerste value
                     var subruleResult = new List<string>();
 
+                    var allRules = rule.Value.Item2 != null
+                        ? rule.Value.Item1.Union(rule.Value.Item2)
+                        : rule.Value.Item1;
+
+                    if(!allRules.All(r => _processedRules.ContainsKey(r)))
+                    {
+                        continue;
+                    }
+
                     // Als alle subrules van de rule processed zijn
                     if (rule.Value.Item1.All(subrule => _processedRules.ContainsKey(subrule)))
                     {
@@ -58,7 +64,7 @@ namespace AdventOfCode.Solutions.Year2020
                                 foreach (var processedSubruleResult in _processedRules[subrule])
                                 {
                                     // Bevat { "a" } of { "b" }
-                                    newSet.Add(currValue += processedSubruleResult);
+                                    newSet.Add(currValue + processedSubruleResult);
                                 }
                             }
 
@@ -83,7 +89,7 @@ namespace AdventOfCode.Solutions.Year2020
                                 foreach (var processedSubruleResult in _processedRules[subrule])
                                 {
                                     // Bevat { "a" } of { "b" }
-                                    newSet.Add(currValue += processedSubruleResult);
+                                    newSet.Add(currValue + processedSubruleResult);
                                 }
                             }
 
@@ -110,7 +116,7 @@ namespace AdventOfCode.Solutions.Year2020
         {
             if(!isDebug)
             {
-                base.DebugInput = string.Empty;
+                //base.DebugInput = string.Empty;
             }
 
             _rules.Clear();
@@ -124,11 +130,11 @@ namespace AdventOfCode.Solutions.Year2020
 
         private void AssertDebugInput()
         {
-            base.DebugInput = "" +
-                "0: 1 2\n" +
-                "1: \"a\"\n" +
-                "2: 1 3 | 3 1\n" +
-                "3: \"b\"";
+            //base.DebugInput = "" +
+            //    "0: 1 2\n" +
+            //    "1: \"a\"\n" +
+            //    "2: 1 3 | 3 1\n" +
+            //    "3: \"b\"";
 
             //base.DebugInput = "" +
             //    "0: 2 1\n" +
@@ -145,11 +151,27 @@ namespace AdventOfCode.Solutions.Year2020
             //    "5: 0 1 0 1\n" +
             //    "6: 0 1 0 1 0 1";
 
+            base.DebugInput = "" +
+                "0: 4 1 5\n" +
+                "1: 2 3 | 3 2\n" +
+                "2: 4 4 | 5 5\n" +
+                "3: 4 5 | 5 4\n" +
+                "4: \"a\"\n" +
+                "5: \"b\"\n" +
+                "\n" +
+                "ababbb\n" +
+                "bababa\n" +
+                "abbbab\n" +
+                "aaabbb\n" +
+                "aaaabbb";
+
             Initialize(true);
+
+            var xx =_processedRules[0].Count(x => _messages.Contains(x));
 
             //CollectionAssert.AreEqual(_processedRules[2], new List<string> { "abaabababababab" });
 
-            //Console.WriteLine($"Debug input is valid!");
+            Console.WriteLine($"Debug input is valid!");
         }
 
         private void FillMessagesFromInput()
