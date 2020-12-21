@@ -17,11 +17,15 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day19() : base(19, 2020, "")
         {
-            //AssertDebugInput();
+            AssertPart1();
             Initialize();
         }
 
-        protected override string SolvePartOne() => _processedRules[0].Count(x => _messages.Contains(x)).ToString();
+        protected override string SolvePartOne()
+        {
+            ProcessEachRule();
+            return _processedRules[0].Count(rule => _messages.Contains(rule)).ToString();
+        }
 
         protected override string SolvePartTwo()
         {
@@ -36,87 +40,64 @@ namespace AdventOfCode.Solutions.Year2020
                 // Voor elke rule die nog niet processed is
                 foreach (var rule in _rules.Where(r => !_processedRules.ContainsKey(r.Key)))
                 {
-                    // Haal de startwaarden op van de eerste value
-                    var subruleResult = new List<string>();
-
-                    var allRules = rule.Value.Item2 != null
-                        ? rule.Value.Item1.Union(rule.Value.Item2)
-                        : rule.Value.Item1;
-
-                    if(!allRules.All(r => _processedRules.ContainsKey(r)))
+                    // Als nog niet alle subrules opgelost zijn, sla deze dan over
+                    if(!AreAllSubrulesProcessed(rule.Value.Item1, rule.Value.Item2))
                     {
                         continue;
                     }
 
-                    // Als alle subrules van de rule processed zijn
-                    if (rule.Value.Item1.All(subrule => _processedRules.ContainsKey(subrule)))
-                    {
-                        var set1Result = new List<string>(_processedRules[rule.Value.Item1[0]]);
-
-                        // rule.value.item1 bevat { 4, 5 }
-                        foreach (var subrule in rule.Value.Item1.Skip(1))
-                        {
-                            var newSet = new List<string>();
-
-                            for(var i = 0; i < set1Result.Count; i++)
-                            {
-                                var currValue = set1Result[i];
-                                foreach (var processedSubruleResult in _processedRules[subrule])
-                                {
-                                    // Bevat { "a" } of { "b" }
-                                    newSet.Add(currValue + processedSubruleResult);
-                                }
-                            }
-
-                            set1Result = new List<string>(newSet);
-                        }
-
-                        subruleResult.AddRange(set1Result);
-                    }
-
-                    if (rule.Value.Item2 != null && rule.Value.Item2.All(subrule => _processedRules.ContainsKey(subrule)))
-                    {
-                        var set2Result = new List<string>(_processedRules[rule.Value.Item2[0]]);
-
-                        // rule.value.item2 bevat { 4, 5 }
-                        foreach (var subrule in rule.Value.Item2.Skip(1))
-                        {
-                            var newSet = new List<string>();
-
-                            for (var i = 0; i < set2Result.Count; i++)
-                            {
-                                var currValue = set2Result[i];
-                                foreach (var processedSubruleResult in _processedRules[subrule])
-                                {
-                                    // Bevat { "a" } of { "b" }
-                                    newSet.Add(currValue + processedSubruleResult);
-                                }
-                            }
-
-                            set2Result = new List<string>(newSet);
-                        }
-
-                        subruleResult.AddRange(set2Result);
-                    }
-
-                    if(subruleResult.Count > 0)
-                    {
-                        _processedRules.Add(rule.Key, subruleResult);
-                    }
+                    var processedSubruleResult = ProcessList(rule.Value.Item1).Union(ProcessList(rule.Value.Item2)).ToList();
+                    _processedRules.Add(rule.Key, processedSubruleResult);
                 }
             }
+        }
 
-            //foreach (var pr in _processedRules)
-            //{
-            //    Console.WriteLine($"[{pr.Key}] {string.Join(" | ", pr.Value)}");
-            //}
+        private bool AreAllSubrulesProcessed(List<int> list1, List<int> list2)
+        {
+            var allRules = list2 != null
+                ? list1.Union(list2)
+                : list1;
+
+            return allRules.All(r => _processedRules.ContainsKey(r));
+        }
+
+        private List<string> ProcessList(List<int> list)
+        {
+            if (list == null || list.Count == 0)
+            {
+                return new List<string>();
+            }
+
+            // Start by filling the WorkingList with the values from the first rule
+            var workingList = new List<string>(_processedRules[list[0]]);
+
+            // Go through all the other subrules
+            foreach (var subrule in list.Skip(1))
+            {
+                // Create a new list which will be filled with appended values
+                var appendedWorkingList = new List<string>();
+
+                // Go through all Working List values and append the lists of the subrules to them
+                foreach (var currentValue in workingList)
+                {
+                    foreach (var processedSubruleResult in _processedRules[subrule])
+                    {
+                        appendedWorkingList.Add(currentValue + processedSubruleResult);
+                    }
+                }
+
+                // Update the workinglist by setting it to the latest version of the appended working list
+                workingList = new List<string>(appendedWorkingList);
+            }
+
+            return workingList;
         }
 
         private void Initialize(bool isDebug = false)
         {
             if(!isDebug)
             {
-                //base.DebugInput = string.Empty;
+                base.DebugInput = null;
             }
 
             _rules.Clear();
@@ -125,32 +106,10 @@ namespace AdventOfCode.Solutions.Year2020
 
             FillMessagesFromInput();
             FillRulesFromInput();
-            ProcessEachRule();
         }
 
-        private void AssertDebugInput()
+        private void AssertPart1()
         {
-            //base.DebugInput = "" +
-            //    "0: 1 2\n" +
-            //    "1: \"a\"\n" +
-            //    "2: 1 3 | 3 1\n" +
-            //    "3: \"b\"";
-
-            //base.DebugInput = "" +
-            //    "0: 2 1\n" +
-            //    "1: \"a\"\n" +
-            //    "2: 1 3 | 3 1\n" +
-            //    "3: \"b\"";
-
-            //base.DebugInput = "" +
-            //    "0: \"a\"\n" +
-            //    "1: \"b\"\n" +
-            //    "2: 0 1 3 4 5 6\n" +
-            //    "3: 0\n" +
-            //    "4: 0 1\n" +
-            //    "5: 0 1 0 1\n" +
-            //    "6: 0 1 0 1 0 1";
-
             base.DebugInput = "" +
                 "0: 4 1 5\n" +
                 "1: 2 3 | 3 2\n" +
@@ -166,12 +125,13 @@ namespace AdventOfCode.Solutions.Year2020
                 "aaaabbb";
 
             Initialize(true);
+            ProcessEachRule();
+            Assert.AreEqual("2", SolvePartOne());
 
-            var xx =_processedRules[0].Count(x => _messages.Contains(x));
-
-            //CollectionAssert.AreEqual(_processedRules[2], new List<string> { "abaabababababab" });
-
-            Console.WriteLine($"Debug input is valid!");
+            // Make sure that the answer for part 1 is still valid
+            Initialize(false);
+            ProcessEachRule();
+            Assert.AreEqual("144", SolvePartOne());
         }
 
         private void FillMessagesFromInput()
