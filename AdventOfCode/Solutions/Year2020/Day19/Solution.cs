@@ -282,7 +282,7 @@ namespace AdventOfCode.Solutions.Year2020
             Initialize(true);
             UpdateRulesForPart2();
             ProcessEachRule();
-            //Assert.AreEqual("12", SolvePartTwo()); // TODO: Make the constants based on input
+            Assert.AreEqual("12", SolvePartTwo());
         }
 
         private void UpdateRulesForPart2()
