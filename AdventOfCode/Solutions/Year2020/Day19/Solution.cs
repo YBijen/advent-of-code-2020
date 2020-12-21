@@ -17,8 +17,8 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day19() : base(19, 2020, "")
         {
-            AssertPart1();
-            AssertPart2();
+            //AssertPart1();
+            //AssertPart2();
             Initialize();
         }
 
@@ -31,8 +31,74 @@ namespace AdventOfCode.Solutions.Year2020
         protected override string SolvePartTwo()
         {
             UpdateRulesForPart2();
-            //ProcessEachRule();
-            return null;
+            ProcessEachRule();
+
+            // = Ugly method to solve part 2 =
+            // What we know for sure:
+            // Message length % {messageLength} == 0, giving n message parts
+            // A message part ALWAYS ends with a or a few rule(s) from _processedRules[31]
+            // A message part ALWAYS starts with 2 or a few rule(s) from _processedRules[42]
+            // The count of the parts of the messages that are found in either 31 or 42 has: countOf31 <= countOf42 + 1
+
+            const int MINIMUM_REQUIRED_SUBMESSAGE = 3;
+
+            var mainMessageLength = _processedRules[42][0].Length;
+            var validMessageCount = 0;
+            foreach(var message in _messages)
+            {
+                if(message.Length < (mainMessageLength * MINIMUM_REQUIRED_SUBMESSAGE)
+                    || message.Length % mainMessageLength != 0)
+                {
+                    continue;
+                }
+
+                var solvedIn = FindWhereMessageIsSolved(message, mainMessageLength);
+
+                // Make sure that the solve always starts with a 42 and ends with a 31
+                if(solvedIn.First() != 42 || solvedIn.Last() != 31)
+                {
+                    continue;
+                }
+
+                var countSolvedIn31 = solvedIn.Count(si => si == 31);
+                var countSolvedIn42 = solvedIn.Count(si => si == 42);
+
+                // Make sure that not too many parts have been solved in 31
+                if(countSolvedIn31 >= countSolvedIn42)
+                {
+                    continue;
+                }
+
+                // Make sure that the solved result ALWAYS end in a 31
+                if(solvedIn.TakeWhile(si => si == 42).Count() < countSolvedIn42)
+                {
+                    continue;
+                }
+
+                validMessageCount++;
+            }
+            return validMessageCount.ToString();
+        }
+
+        private IEnumerable<int> FindWhereMessageIsSolved(string message, int messageLength)
+        {
+            var messageParts = Enumerable.Range(0, message.Length / messageLength)
+                .Select(i => message.Substring(i * messageLength, messageLength));
+            foreach (var messagePart in messageParts)
+            {
+                if (_processedRules[42].Contains(messagePart))
+                {
+                    yield return 42;
+                }
+                else if (_processedRules[31].Contains(messagePart))
+                {
+                    yield return 31;
+                }
+                else
+                {
+                    throw new Exception("This is not expected");
+                }
+            }
         }
 
         private void ProcessEachRule()
@@ -44,7 +110,7 @@ namespace AdventOfCode.Solutions.Year2020
                 foreach (var rule in _rules.Where(r => !_processedRules.ContainsKey(r.Key)))
                 {
                     // Als nog niet alle subrules opgelost zijn, sla deze dan over
-                    if(!AreAllSubrulesProcessed(rule.Value.Item1, rule.Value.Item2))
+                    if(!AreAllSubrulesProcessed(rule.Key, rule.Value.Item1, rule.Value.Item2))
                     {
                         continue;
                     }
@@ -59,16 +125,27 @@ namespace AdventOfCode.Solutions.Year2020
             }
         }
 
-        private bool AreAllSubrulesProcessed(List<int> list1, List<int> list2)
+        private bool AreAllSubrulesProcessed(int key, List<int> list1, List<int> list2)
         {
             var allRules = list2 != null
                 ? list1.Union(list2)
                 : list1;
 
-            return allRules.All(r => _processedRules.ContainsKey(r));
+            var unsolvedSubrules = allRules.Where(r => !_processedRules.ContainsKey(r)).ToList();
+            if(unsolvedSubrules.Count == 0)
+            {
+                return true;
+            }
+
+            if(unsolvedSubrules.Count == 1 && unsolvedSubrules[0] == key)
+            {
+                return true;
+            }
+
+            return false;
         }
 
-        private List<string> ProcessList(int key, List<int> list)
+        private List<string> ProcessList(int ruleKey, List<int> list)
         {
             if (list == null || list.Count == 0)
             {
@@ -79,15 +156,21 @@ namespace AdventOfCode.Solutions.Year2020
             var workingList = new List<string>(_processedRules[list[0]]);
 
             // Go through all the other subrules
-            foreach (var subrule in list.Skip(1))
+            foreach (var subruleKey in list.Skip(1))
             {
+                // If the subrule is the same as the parent we have to take measures to prevent an infinite loop
+                if (ruleKey == subruleKey)
+                {
+                    return workingList;
+                }
+
                 // Create a new list which will be filled with appended values
                 var appendedWorkingList = new List<string>();
 
                 // Go through all Working List values and append the lists of the subrules to them
                 foreach (var currentValue in workingList)
                 {
-                    foreach (var processedSubruleResult in _processedRules[subrule])
+                    foreach (var processedSubruleResult in _processedRules[subruleKey])
                     {
                         appendedWorkingList.Add(currentValue + processedSubruleResult);
                     }
@@ -199,8 +282,8 @@ namespace AdventOfCode.Solutions.Year2020
 
             Initialize(true);
             UpdateRulesForPart2();
-            //ProcessEachRule();
-            //Assert.AreEqual("12", SolvePartTwo());
+            ProcessEachRule();
+            //Assert.AreEqual("12", SolvePartTwo()); // TODO: Make the constants based on input
         }
 
         private void UpdateRulesForPart2()
