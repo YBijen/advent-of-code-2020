@@ -17,7 +17,9 @@ namespace AdventOfCode.Solutions.Year2020
         private const int LENGTH_IMAGE = 10;
         private Dictionary<int, (List<char> Standard, List<char> Flipped)> _images;
         private readonly Dictionary<int, List<char>> _validLists = new Dictionary<int, List<char>>();
-        private readonly Dictionary<int, List<char>> _correctImages = new Dictionary<int, List<char>>();
+        private readonly Dictionary<(int X, int Y), int> _correctImages = new Dictionary<(int X, int Y), int>();
+
+        private List<(int, List<char>)> _fullImage = new List<(int, List<char>)>();
 
         public Day20() : base(20, 2020, "")
         {
@@ -34,46 +36,108 @@ namespace AdventOfCode.Solutions.Year2020
             }
         }
 
-        protected override string SolvePartOne() => CalculateAllPossibleSolveCountsForImages()
+        protected override string SolvePartOne() => FindSolvesForEachImage()
                 .Where(kvp => kvp.Value.Count == 2)
                 .Select(kvp => (long)kvp.Key)
                 .Aggregate(1L, (v1, v2) => v1 * v2)
                 .ToString();
 
+        protected override string SolvePartTwo()
+        {
+            var lengthAllImages = base.DebugInput == null ? 12 : 3; // TODO: Resolve by code
+
+            var solvables = FindSolvesForEachImage();
+
+            var topLeftKey = FindTopLeftStartingTile(solvables);
+            _correctImages.Add((0, 0), topLeftKey);
+
+            _fullImage.Add((topLeftKey, _images[topLeftKey].Standard));
+
+            // TODO: Update the 1 after the first row works
+            for(var y = 0; y < 1; y++)
+            {
+                for(var x = 0; x < lengthAllImages; x++)
+                {
+                    // Skip top left, because we have it already
+                    if(x == 0 && x == 0)
+                    {
+                        continue;
+                    }
+
+                    // Look for y - 1 for the correct image to check
+                    if(x == 0)
+                    {
+                        // Not needed yet
+                    }
+
+                    var lastImage = _correctImages.Last();
+                    var solves = solvables[lastImage.Value];
+
+                    if(solves.Any(s => s.Rotation == 270)) // TODO: Improve
+                    {
+                        var correctSolve = solves.Find(s => s.Rotation == 270);
+                        if(correctSolve.IsFlipped)
+                        {
+                            _fullImage.Add((correctSolve.SolvableByImage, RotateImage(_images[correctSolve.SolvableByImage].Flipped, correctSolve.Rotation)));
+                        }
+                        else
+                        {
+                            _fullImage.Add((correctSolve.SolvableByImage, RotateImage(_images[correctSolve.SolvableByImage].Standard, correctSolve.Rotation)));
+                        }
+                        _correctImages.Add((x, y), correctSolve.SolvableByImage);
+                    }
+                    else
+                    {
+                        var correctSolve = solves.Find(s => s.Rotation == 90);
+                        if (correctSolve.IsFlipped)
+                        {
+                            _fullImage.Add((correctSolve.SolvableByImage, RotateImage(_images[correctSolve.SolvableByImage].Standard, correctSolve.Rotation)));
+                        }
+                        else
+                        {
+                            _fullImage.Add((correctSolve.SolvableByImage, RotateImage(_images[correctSolve.SolvableByImage].Flipped, correctSolve.Rotation)));
+                        }
+                        _correctImages.Add((x, y), correctSolve.SolvableByImage);
+
+                    }
+                }
+            }
+
+            foreach(var x in _fullImage)
+            {
+                PrintImage(x.Item1, x.Item2);
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Find the starting tile, we're looking for a tile in the top-left corner
         /// </summary>
-        private List<char> FindTopLeftStartingTile()
+        private int FindTopLeftStartingTile(Dictionary<int, List<(int SolvableByImage, int Rotation, bool IsFlipped)>> solvables)
         {
-            var solvables = CalculateAllPossibleSolveCountsForImages();
-
             // For the top-left corner we need a solve for rotation 90 and rotation 180
             var expectedSolvedRotation = new List<int> { 90, 180 };
 
-            var possibleTopLeftCorner = solvables.Where(kvp => kvp.Value.All(rotation => expectedSolvedRotation.Contains(rotation)));
+            var possibleTopLeftCorner = solvables.Where(kvp => kvp.Value.All(value => expectedSolvedRotation.Contains(value.Rotation)));
             if (possibleTopLeftCorner.Count() != 1)
             {
                 throw new Exception("Your input needs further processing");
             }
 
-            return _images[possibleTopLeftCorner.First().Key].Standard;
-        }
-
-        protected override string SolvePartTwo()
-        {
-            return null;
+            return possibleTopLeftCorner.First().Key;
         }
 
         /// <summary>
         /// For each image, count how many times it can be solved
         /// Returns a list of the possible solves with a rotation
         /// </summary>
-        private Dictionary<int, List<int>> CalculateAllPossibleSolveCountsForImages()
+        private Dictionary<int, List<(int SolvableByImage, int Rotation, bool IsFlipped)>> FindSolvesForEachImage()
         {
-            var solvables = new Dictionary<int, List<int>>();
+            var solvables = new Dictionary<int, List<(int SolvableByImage, int Rotation, bool IsFlipped)>>();
             foreach(var baseImage in _images)
             {
-                solvables.Add(baseImage.Key, new List<int>());
+                solvables.Add(baseImage.Key, new List<(int SolvableByImage, int Rotation, bool IsFlipped)>());
 
                 var baseTileTopRows = new List<string>();
                 for (var r = 0; r <= 270; r += 90)
@@ -94,28 +158,13 @@ namespace AdventOfCode.Solutions.Year2020
                         {
                             if(topRow == GetTopRowForRotatedImage(compareTile.Value.Standard, r))
                             {
-                                solvables[baseImage.Key].Add(r);
-                            }
-
-                            if (solvables[baseImage.Key].Count > 2)
-                            {
-                                break;
+                                solvables[baseImage.Key].Add((compareTile.Key, r, false));
                             }
 
                             if (topRow == GetTopRowForRotatedImage(compareTile.Value.Flipped, r))
                             {
-                                solvables[baseImage.Key].Add(r);
+                                solvables[baseImage.Key].Add((compareTile.Key, r, true));
                             }
-
-                            if (solvables[baseImage.Key].Count > 2)
-                            {
-                                break;
-                            }
-                        }
-
-                        if (solvables[baseImage.Key].Count > 2)
-                        {
-                            break;
                         }
                     }
                 }
