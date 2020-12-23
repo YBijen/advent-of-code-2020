@@ -42,7 +42,7 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day20Solution() : base(20, 2020, "")
         {
-            SetDebugInput();
+            //SetDebugInput();
             ParseInput();
 
             _lengthAllImages = base.DebugInput == null ? 12 : 3; // TODO: Resolve by code
@@ -119,11 +119,20 @@ namespace AdventOfCode.Solutions.Year2020
             var topLeftImageId = FindTopLeftStartingTile(imageSolves);
             _fullImage.Add((topLeftImageId, _images[topLeftImageId].Standard));
 
+            var addedImages = new List<int>();
+            PrintImage(topLeftImageId, _images[topLeftImageId].Standard, "Top left");
+
             for (var i = 1; i < (_lengthAllImages * _lengthAllImages); i++)
             {
+                var currentCount = _fullImage.Count;
+                addedImages.Add(_fullImage.Last().ImageId);
+                PrintImage(_fullImage.Last().ImageId, _fullImage.Last().Image);
+
+                //var found = false;
+
                 ImageMatch previousImageSolve;
                 string borderToFind;
-                int toRotate = 0;
+                //int toRotate = 0;
                 Border borderToTake;
 
                 // If the next image to add is on a new y
@@ -131,11 +140,11 @@ namespace AdventOfCode.Solutions.Year2020
                 {
                     var (imageId, image) = _fullImage[i - _lengthAllImages];
                     borderToFind = GetBorderForImage(image, Border.Bottom);
-                    previousImageSolve = imageSolves[imageId].Find(i => i.MatchedAtRotation == 180);
+                    previousImageSolve = imageSolves[imageId].Find(i => !addedImages.Contains(i.ImageId) && (i.MatchedAtRotation == 180 || i.MatchedAtRotation == 0));
                     borderToTake = Border.Top;
 
                     // Find the value to which the image should be rotated
-                    toRotate = Math.Abs(180 - previousImageSolve.Rotation);
+                    //toRotate = Math.Abs(180 - previousImageSolve.Rotation);
 
                 }
                 // If the next image to add is on the same y
@@ -143,31 +152,51 @@ namespace AdventOfCode.Solutions.Year2020
                 {
                     var (imageId, image) = _fullImage.Last();
                     borderToFind = GetBorderForImage(image, Border.Right);
-                    previousImageSolve = imageSolves[imageId].Find(i => i.MatchedAtRotation == 270);
+                    previousImageSolve = imageSolves[imageId].Find(i => !addedImages.Contains(i.ImageId) && (i.MatchedAtRotation == 270 || i.MatchedAtRotation == 90));
                     borderToTake = Border.Left;
 
                     // Find the value to which the image should be rotated
-                    toRotate = Math.Abs(90 - previousImageSolve.Rotation);
+                    //toRotate = Math.Abs(90 - previousImageSolve.Rotation);
                 }
 
-                var standardImage = RotateImage(_images[previousImageSolve.ImageId].Standard, toRotate);
-                if (borderToFind == GetBorderForImage(standardImage, borderToTake))
+                // Om dit te fixen:
+                // Ga door alle nog-niet-solved solves in imageSolves[imageId] heen en ga door tot je de juiste border oplossing gevonden hebt
+
+                // Print current image
+                PrintImage(previousImageSolve.ImageId, _images[previousImageSolve.ImageId].Standard);
+
+                for(var r = 0; r < 360; r += 90)
                 {
-                    _fullImage.Add((previousImageSolve.ImageId, standardImage));
-                    continue;
+                    PrintImage(previousImageSolve.ImageId, _images[previousImageSolve.ImageId].Standard, "Standard PreRotate " + r);
+                    var standardImage = RotateImage(_images[previousImageSolve.ImageId].Standard, r);
+                    PrintImage(previousImageSolve.ImageId, standardImage, "Standard AfterRotate" + r);
+
+                    if (borderToFind == GetBorderForImage(standardImage, borderToTake))
+                    {
+                        _fullImage.Add((previousImageSolve.ImageId, standardImage));
+                        break;
+                    }
+
+                    PrintImage(previousImageSolve.ImageId, _images[previousImageSolve.ImageId].Flipped, "Flipped PreRotate " + r);
+                    var flippedImage = RotateImage(_images[previousImageSolve.ImageId].Flipped, r);
+                    PrintImage(previousImageSolve.ImageId, flippedImage, "Flipped AfterRotate " + r);
+
+                    if (borderToFind == GetBorderForImage(flippedImage, borderToTake))
+                    {
+                        _fullImage.Add((previousImageSolve.ImageId, flippedImage));
+                        break;
+                    }
                 }
 
-                var flippedImage = RotateImage(_images[previousImageSolve.ImageId].Flipped, toRotate);
-                if (borderToFind == GetBorderForImage(flippedImage, borderToTake))
+                
+                if(currentCount == _fullImage.Count)
                 {
-                    _fullImage.Add((previousImageSolve.ImageId, flippedImage));
-                    continue;
-                }
+                    throw new Exception($"Something is going wrong in deciding the correct rotation for the current image.");
 
-                throw new Exception($"Something is going wrong in deciding the correct rotation for the current image.");
+                }
             }
 
-            //PrintFullImage();
+            PrintFullImageWithBorders();
         }
 
         /// <summary>
@@ -178,7 +207,7 @@ namespace AdventOfCode.Solutions.Year2020
             // For the top-left corner we need a solve for rotation 90 and rotation 180
             var expectedSolvedRotation = new List<int> { 90, 180 };
 
-            var possibleTopLeftCorner = solvables.Where(kvp => kvp.Value.All(value => expectedSolvedRotation.Contains(value.Rotation)));
+            var possibleTopLeftCorner = solvables.Where(kvp => kvp.Value.Count == 2 && kvp.Value.All(value => expectedSolvedRotation.Contains(value.Rotation)));
             if (possibleTopLeftCorner.Count() != 1)
             {
                 throw new Exception("Your input needs further processing");
@@ -320,20 +349,24 @@ namespace AdventOfCode.Solutions.Year2020
             }
             Console.WriteLine();
 
-            //Console.WriteLine("The full image (including borders):");
-            //var fullImages = _fullImage.Select(fi => fi.Image).ToList();
-            //for (var y = 0; y < _lengthAllImages * LENGTH_IMAGE; y++)
-            //{
-            //    var listIndexY = y / LENGTH_IMAGE;
-            //    var listY = y % LENGTH_IMAGE;
-            //    for (var x = 0; x < _lengthAllImages * LENGTH_IMAGE; x++)
-            //    {
-            //        var listIndexX = x / LENGTH_IMAGE;
-            //        var listX = x % LENGTH_IMAGE;
-            //        Console.Write(fullImages[(listIndexY * _lengthAllImages + listIndexX)][CalcIndexForRotation(0, listX, listY)]);
-            //    }
-            //    Console.WriteLine();
-            //}
+        }
+
+        private void PrintFullImageWithBorders()
+        {
+            Console.WriteLine("The full image (including borders):");
+            var fullImages = _fullImage.Select(fi => fi.Image).ToList();
+            for (var y = 0; y < _lengthAllImages * LENGTH_IMAGE; y++)
+            {
+                var listIndexY = y / LENGTH_IMAGE;
+                var listY = y % LENGTH_IMAGE;
+                for (var x = 0; x < _lengthAllImages * LENGTH_IMAGE; x++)
+                {
+                    var listIndexX = x / LENGTH_IMAGE;
+                    var listX = x % LENGTH_IMAGE;
+                    Console.Write(fullImages[(listIndexY * _lengthAllImages + listIndexX)][CalcIndexForRotation(0, listX, listY)]);
+                }
+                Console.WriteLine();
+            }
         }
 
         private void ParseInput()
