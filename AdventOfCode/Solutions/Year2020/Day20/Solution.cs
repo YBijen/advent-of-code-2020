@@ -1,24 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdventOfCode.Solutions.Year2020
 {
     class Day20 : ASolution
     {
-        private const char EMPTY = '.';
-        private const char FILLED = '#';
-
         private const int LENGTH_IMAGE = 10;
-        private readonly int _lengthAllImages; 
+        private readonly int _lengthAllImages;
 
-        private Dictionary<int, (List<char> Standard, List<char> Flipped)> _images;
-        private List<(int ImageId, List<char> Image)> _fullImage = new List<(int, List<char>)>();
+        private readonly Dictionary<int, (List<char> Standard, List<char> Flipped)> _images = new Dictionary<int, (List<char> Standard, List<char> Flipped)>();
+        private readonly List<(int ImageId, List<char> Image)> _fullImage = new List<(int, List<char>)>();
 
         public Day20() : base(20, 2020, "")
         {
@@ -247,7 +242,6 @@ namespace AdventOfCode.Solutions.Year2020
 
         private void ParseInput()
         {
-            _images = new Dictionary<int, (List<char> Standard, List<char> Flipped)>();
             var splitOn = base.Input.Contains("\r\n\r\n") ? "\r\n\r\n" : "\n\n";
             foreach (var inputImage in base.Input.Split(splitOn))
             {
