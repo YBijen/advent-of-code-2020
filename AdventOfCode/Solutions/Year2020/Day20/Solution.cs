@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using AdventOfCode.Solutions.Year2020.Day20.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdventOfCode.Solutions.Year2020
 {
-    class Day20 : ASolution
+    class Day20Solution : ASolution
     {
         private const int LENGTH_IMAGE = 10;
         private readonly int _lengthAllImages;
@@ -15,7 +16,7 @@ namespace AdventOfCode.Solutions.Year2020
         private readonly Dictionary<int, (List<char> Standard, List<char> Flipped)> _images = new Dictionary<int, (List<char> Standard, List<char> Flipped)>();
         private readonly List<(int ImageId, List<char> Image)> _fullImage = new List<(int, List<char>)>();
 
-        public Day20() : base(20, 2020, "")
+        public Day20Solution() : base(20, 2020, "")
         {
             SetDebugInput();
             ParseInput();
@@ -261,29 +262,5 @@ namespace AdventOfCode.Solutions.Year2020
             using var reader = new StreamReader(stream);
             base.DebugInput = reader.ReadToEnd();
         }
-    }
-
-    public class ImageMatch
-    {
-        public ImageMatch(int imageId, bool isFlipped, int rotation, int matchedAtRotation)
-        {
-            ImageId = imageId;
-            IsFlipped = isFlipped;
-            Rotation = rotation;
-            MatchedAtRotation = matchedAtRotation;
-        }
-
-        public int ImageId { get; set; }
-        public bool IsFlipped { get; set; }
-        public int Rotation { get; set; }
-        public int MatchedAtRotation { get; set; }
-    }
-
-    public enum Border
-    {
-        Top,
-        Right,
-        Bottom,
-        Left
     }
 }
