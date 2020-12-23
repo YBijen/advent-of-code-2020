@@ -10,6 +10,28 @@ namespace AdventOfCode.Solutions.Year2020
 {
     class Day20Solution : ASolution
     {
+        const int LENGTH_SEA_MONSTER = 20;
+        const int HEIGHT_SEA_MONSTER = 3;
+
+        private readonly List<(int X, int Y)> _seaMonsterCoords = new List<(int X, int Y)>
+        {
+            (0, -1),
+            (1, -2),
+            (4, -2),
+            (5, -1),
+            (6, -1),
+            (7, -2),
+            (10, -2),
+            (11, -1),
+            (12, -1),
+            (13, -2),
+            (16, -2),
+            (17, -1),
+            (18, 0),
+            (18, -1),
+            (19, -1)
+        };
+
         private const int LENGTH_IMAGE = 10;
         private readonly int _lengthFullImage;
         private readonly int _lengthAllImages;
@@ -49,8 +71,13 @@ namespace AdventOfCode.Solutions.Year2020
             PrintFullImage(_trimmedFullImage);
             var rotated = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
             PrintFullImage(rotated);
-
+            FindSeaMonsters();
             return null;
+        }
+
+        private void FindSeaMonsters()
+        {
+            var imageWithSeaMonsters = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
         }
 
         private void TrimFullImage()
