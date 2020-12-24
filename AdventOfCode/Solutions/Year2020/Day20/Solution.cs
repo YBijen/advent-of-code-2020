@@ -42,7 +42,7 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day20Solution() : base(20, 2020, "")
         {
-            SetDebugInput();
+            //SetDebugInput();
             ParseInput();
 
             _lengthAllImages = base.DebugInput == null ? 12 : 3; // TODO: Resolve by code
@@ -71,54 +71,71 @@ namespace AdventOfCode.Solutions.Year2020
             //PrintFullImage(_trimmedFullImage);
             //var rotated = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
             //PrintFullImage(rotated);
-            FindSeaMonsters();
-            return null;
+            return FindSeaMonsters().ToString();
         }
 
-        private void FindSeaMonsters()
+        private int FindSeaMonsters()
         {
             // Not needed but for now ok
-            var imageWithSeaMonsters = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
-            PrintFullImage(imageWithSeaMonsters);
+            //var imageWithSeaMonsters = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
+            //PrintFullImage(imageWithSeaMonsters);
 
             var count = 0;
-            for(var y = 0; y < (_lengthFullImage - HEIGHT_SEA_MONSTER + 1); y++)
+
+            for (var flip = 0; flip < 2; flip++)
             {
-                for(var x = 0; x < (_lengthFullImage - LENGTH_SEA_MONSTER + 1); x++)
+                for (var r = 0; r < 360; r += 90)
                 {
-                    //Console.WriteLine($"== View From {x},{y} ==");
-                    //for (var monsterY = 0; monsterY < HEIGHT_SEA_MONSTER; monsterY++)
-                    //{
-                    //    for (var monsterX = 0; monsterX < LENGTH_SEA_MONSTER; monsterX++)
-                    //    {
-                    //        Console.Write(imageWithSeaMonsters[CalcIndexForTrimmedFullImageRotation(0, x + monsterX, y + monsterY)]);
-                    //    }
-                    //    Console.WriteLine();
-                    //}
-                    //Console.WriteLine();
-                    //Console.WriteLine();
-
-
-
-                    var isSeaMonster = true;
-                    foreach (var smc in _seaMonsterCoords)
+                    for (var y = 0; y < (_lengthFullImage - HEIGHT_SEA_MONSTER + 1); y++)
                     {
-                        var result = imageWithSeaMonsters[CalcIndexForTrimmedFullImageRotation(0, x + smc.X, y + Math.Abs(smc.Y))];
-                        if (result != '#')
+                        for (var x = 0; x < (_lengthFullImage - LENGTH_SEA_MONSTER + 1); x++)
                         {
-                            isSeaMonster = false;
-                            break;
+                            //Console.WriteLine($"== View From {x},{y} ==");
+                            //for (var monsterY = 0; monsterY < HEIGHT_SEA_MONSTER; monsterY++)
+                            //{
+                            //    for (var monsterX = 0; monsterX < LENGTH_SEA_MONSTER; monsterX++)
+                            //    {
+                            //        Console.Write(imageWithSeaMonsters[CalcIndexForTrimmedFullImageRotation(0, x + monsterX, y + monsterY)]);
+                            //    }
+                            //    Console.WriteLine();
+                            //}
+                            //Console.WriteLine();
+                            //Console.WriteLine();
+
+
+
+                            var isSeaMonster = true;
+                            foreach (var smc in _seaMonsterCoords)
+                            {
+                                var result = _trimmedFullImage[CalcIndexForTrimmedFullImageRotationNonDebug(r, x + smc.X, y + Math.Abs(smc.Y))];
+                                if (result != '#')
+                                {
+                                    isSeaMonster = false;
+                                    break;
+                                }
+                            }
+                            if (isSeaMonster)
+                            {
+                                count++;
+                            }
                         }
                     }
-                    if (isSeaMonster)
+
+                    if (count > 0)
                     {
-                        count++;
+                        break;
                     }
+                }
+                if(count > 0)
+                {
+                    break;
                 }
             }
 
-            var roughness = _trimmedFullImage.Count(tfi => tfi == '#') - (count * _seaMonsterCoords.Count);
-            Console.WriteLine("Water Roughness is " + roughness);
+
+
+
+            return _trimmedFullImage.Count(tfi => tfi == '#') - (count * _seaMonsterCoords.Count);
         }
 
         private void TrimFullImage()
@@ -354,9 +371,9 @@ namespace AdventOfCode.Solutions.Year2020
         public int CalcIndexForTrimmedFullImageRotationNonDebug(int r, int x, int y) => r switch
         {
             0 => y * _lengthFullImage + x,
-            90 => 552 + y - (x * _lengthFullImage),
-            180 => 575 - (y * _lengthFullImage) - x,
-            270 => 23 - y + (x * _lengthFullImage),
+            90 => 9120 + y - (x * _lengthFullImage),
+            180 => 9216 - (y * _lengthFullImage) - x,
+            270 => 25 - y + (x * _lengthFullImage),
             _ => throw new Exception("Invalid rotation value: " + r)
         };
 
