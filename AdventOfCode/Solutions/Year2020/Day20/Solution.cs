@@ -10,8 +10,9 @@ namespace AdventOfCode.Solutions.Year2020
 {
     class Day20Solution : ASolution
     {
-        const int LENGTH_SEA_MONSTER = 20;
-        const int HEIGHT_SEA_MONSTER = 3;
+        private const int LENGTH_INPUT_IMAGE = 10;
+        private const int LENGTH_SEA_MONSTER = 20;
+        private const int HEIGHT_SEA_MONSTER = 3;
 
         private readonly List<(int X, int Y)> _seaMonsterCoords = new List<(int X, int Y)>
         {
@@ -32,7 +33,6 @@ namespace AdventOfCode.Solutions.Year2020
             (19, -1)
         };
 
-        private const int LENGTH_IMAGE = 10;
         private readonly int _lengthFullImage;
         private readonly int _lengthAllImages;
 
@@ -42,20 +42,31 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day20Solution() : base(20, 2020, "")
         {
-            //SetDebugInput();
+            SetDebugInput();
             ParseInput();
 
-            _lengthAllImages = base.DebugInput == null ? 12 : 3; // TODO: Resolve by code
-            _lengthFullImage = (LENGTH_IMAGE * _lengthAllImages) - (_lengthAllImages * 2); // Remove borders
+            _lengthAllImages = (int)Math.Sqrt(_images.Count);
+
+            // Set the Full Image Length by removing the borders
+            _lengthFullImage = (LENGTH_INPUT_IMAGE * _lengthAllImages) - (_lengthAllImages * 2); // Remove borders
 
             if (base.DebugInput == null)
             {
                 Assert.AreEqual(2699020245973.ToString(), SolvePartOne());
+                _fullImage.Clear();
+                _trimmedFullImage.Clear();
+                Assert.AreEqual(2012.ToString(), SolvePartTwo());
             }
             else
             {
                 Assert.AreEqual(20899048083289.ToString(), SolvePartOne());
+                _fullImage.Clear();
+                _trimmedFullImage.Clear();
+                Assert.AreEqual(273.ToString(), SolvePartTwo());
             }
+
+            _fullImage.Clear();
+            _trimmedFullImage.Clear();
         }
 
         protected override string SolvePartOne() => FindSolvesForEachImage()
@@ -68,18 +79,11 @@ namespace AdventOfCode.Solutions.Year2020
         {
             FillFullImage();
             TrimFullImage();
-            //PrintFullImage(_trimmedFullImage);
-            //var rotated = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
-            //PrintFullImage(rotated);
             return FindSeaMonsters().ToString();
         }
 
         private int FindSeaMonsters()
         {
-            // Not needed but for now ok
-            //var imageWithSeaMonsters = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
-            //PrintFullImage(imageWithSeaMonsters);
-
             var count = 0;
 
             for (var flip = 0; flip < 2; flip++)
@@ -90,24 +94,10 @@ namespace AdventOfCode.Solutions.Year2020
                     {
                         for (var x = 0; x < (_lengthFullImage - LENGTH_SEA_MONSTER + 1); x++)
                         {
-                            //Console.WriteLine($"== View From {x},{y} ==");
-                            //for (var monsterY = 0; monsterY < HEIGHT_SEA_MONSTER; monsterY++)
-                            //{
-                            //    for (var monsterX = 0; monsterX < LENGTH_SEA_MONSTER; monsterX++)
-                            //    {
-                            //        Console.Write(imageWithSeaMonsters[CalcIndexForTrimmedFullImageRotation(0, x + monsterX, y + monsterY)]);
-                            //    }
-                            //    Console.WriteLine();
-                            //}
-                            //Console.WriteLine();
-                            //Console.WriteLine();
-
-
-
                             var isSeaMonster = true;
                             foreach (var smc in _seaMonsterCoords)
                             {
-                                var result = _trimmedFullImage[CalcIndexForTrimmedFullImageRotationNonDebug(r, x + smc.X, y + Math.Abs(smc.Y))];
+                                var result = _trimmedFullImage[CalcIndexForFullImageRotation(r, x + smc.X, y + Math.Abs(smc.Y))];
                                 if (result != '#')
                                 {
                                     isSeaMonster = false;
@@ -131,32 +121,28 @@ namespace AdventOfCode.Solutions.Year2020
                     break;
                 }
             }
-
-
-
-
             return _trimmedFullImage.Count(tfi => tfi == '#') - (count * _seaMonsterCoords.Count);
         }
 
         private void TrimFullImage()
         {
             var fullImages = _fullImage.Select(fi => fi.Image).ToList();
-            for (var y = 1; y < _lengthAllImages * LENGTH_IMAGE; y++)
+            for (var y = 1; y < _lengthAllImages * LENGTH_INPUT_IMAGE; y++)
             {
-                var listIndexY = y / LENGTH_IMAGE;
-                var listY = y % LENGTH_IMAGE;
+                var listIndexY = y / LENGTH_INPUT_IMAGE;
+                var listY = y % LENGTH_INPUT_IMAGE;
 
-                if (listY == 0 || listY == LENGTH_IMAGE - 1)
+                if (listY == 0 || listY == LENGTH_INPUT_IMAGE - 1)
                 {
                     continue;
                 }
 
-                for (var x = 0; x < _lengthAllImages * LENGTH_IMAGE; x++)
+                for (var x = 0; x < _lengthAllImages * LENGTH_INPUT_IMAGE; x++)
                 {
-                    var listIndexX = x / LENGTH_IMAGE;
-                    var listX = x % LENGTH_IMAGE;
+                    var listIndexX = x / LENGTH_INPUT_IMAGE;
+                    var listX = x % LENGTH_INPUT_IMAGE;
 
-                    if (listX == 0 || listX == LENGTH_IMAGE - 1)
+                    if (listX == 0 || listX == LENGTH_INPUT_IMAGE - 1)
                     {
                         continue;
                     }
@@ -237,8 +223,6 @@ namespace AdventOfCode.Solutions.Year2020
                     throw new Exception($"Something is going wrong in deciding the correct rotation for the current image.");
                 }
             }
-
-            //PrintFullImageWithBorders();
         }
 
         /// <summary>
@@ -312,36 +296,36 @@ namespace AdventOfCode.Solutions.Year2020
         /// </summary>
         public static int CalcIndexForRotation(int r, int x, int y) => r switch
         {
-            0 => y * LENGTH_IMAGE + x,
-            90 => 90 + y - (x * LENGTH_IMAGE),
-            180 => 99 - (y * LENGTH_IMAGE) - x,
-            270 => 9 - y + (x * LENGTH_IMAGE),
+            0 => y * LENGTH_INPUT_IMAGE + x,
+            90 => 90 + y - (x * LENGTH_INPUT_IMAGE),
+            180 => 99 - (y * LENGTH_INPUT_IMAGE) - x,
+            270 => 9 - y + (x * LENGTH_INPUT_IMAGE),
             _ => throw new Exception("Invalid rotation value: " + r)
         };
 
         private static List<char> RotateImage(List<char> image, int rotation) =>
             Enumerable.Range(0, image.Count)
-            .Select(x => image[CalcIndexForRotation(rotation, x % LENGTH_IMAGE, x / LENGTH_IMAGE)])
+            .Select(x => image[CalcIndexForRotation(rotation, x % LENGTH_INPUT_IMAGE, x / LENGTH_INPUT_IMAGE)])
             .ToList();
 
         private static string GetBorderForImage(List<char> image, Border border) => border switch
         {
-            Border.Top => string.Join("", image.Take(LENGTH_IMAGE)),
-            Border.Right => string.Join("", image.Where((c, idx) => idx > 0 && idx % LENGTH_IMAGE == (LENGTH_IMAGE - 1))),
-            Border.Left => string.Join("", image.Where((c, idx) => idx % LENGTH_IMAGE == 0)),
-            Border.Bottom => string.Join("", image.Skip((LENGTH_IMAGE * LENGTH_IMAGE) - LENGTH_IMAGE)),
+            Border.Top => string.Join("", image.Take(LENGTH_INPUT_IMAGE)),
+            Border.Right => string.Join("", image.Where((c, idx) => idx > 0 && idx % LENGTH_INPUT_IMAGE == (LENGTH_INPUT_IMAGE - 1))),
+            Border.Left => string.Join("", image.Where((c, idx) => idx % LENGTH_INPUT_IMAGE == 0)),
+            Border.Bottom => string.Join("", image.Skip((LENGTH_INPUT_IMAGE * LENGTH_INPUT_IMAGE) - LENGTH_INPUT_IMAGE)),
             _ => throw new Exception("Invalid border")
         };
 
         private string GetTopRowForRotatedImage(List<char> image, int rotation) =>
-            string.Join("", Enumerable.Range(0, LENGTH_IMAGE).Select(x => image[CalcIndexForRotation(rotation, x, 0)]));
+            string.Join("", Enumerable.Range(0, LENGTH_INPUT_IMAGE).Select(x => image[CalcIndexForRotation(rotation, x, 0)]));
 
         private static List<char> FlipImage(List<char> image)
         {
             var tileFlipped = new List<char>();
-            for (var i = (image.Count - LENGTH_IMAGE); i >= 0; i -= LENGTH_IMAGE)
+            for (var i = (image.Count - LENGTH_INPUT_IMAGE); i >= 0; i -= LENGTH_INPUT_IMAGE)
             {
-                tileFlipped.AddRange(image.Skip(i).Take(LENGTH_IMAGE));
+                tileFlipped.AddRange(image.Skip(i).Take(LENGTH_INPUT_IMAGE));
             }
             return tileFlipped;
         }
@@ -350,40 +334,23 @@ namespace AdventOfCode.Solutions.Year2020
         /// Calculate the index for an array which contains an x-y grid
         /// For info about the magic numbers see: https://youtu.be/8OK8_tHeCIA
         /// </summary>
-        public int CalcIndexForTrimmedFullImageRotation(int r, int x, int y) => r switch
+        public int CalcIndexForFullImageRotation(int r, int x, int y) => r switch
         {
             0 => y * _lengthFullImage + x,
-            90 => 552 + y - (x * _lengthFullImage),
-            180 => 575 - (y * _lengthFullImage) - x,
-            270 => 23 - y + (x * _lengthFullImage),
+            90 => (_lengthFullImage * _lengthFullImage - _lengthFullImage) + y - (x * _lengthFullImage),
+            180 => (_lengthFullImage * _lengthFullImage - 1) - (y * _lengthFullImage) - x,
+            270 => (_lengthFullImage - 1) - y + (x * _lengthFullImage),
             _ => throw new Exception("Invalid rotation value: " + r)
         };
 
-        private List<char> RotateTrimmedFullImageImage(List<char> image, int rotation) =>
-            Enumerable.Range(0, image.Count)
-            .Select(x => image[CalcIndexForTrimmedFullImageRotation(rotation, x % _lengthFullImage, x / _lengthFullImage)])
-            .ToList();
-
-        /// <summary>
-        /// Calculate the index for an array which contains an x-y grid
-        /// For info about the magic numbers see: https://youtu.be/8OK8_tHeCIA
-        /// </summary>
-        public int CalcIndexForTrimmedFullImageRotationNonDebug(int r, int x, int y) => r switch
-        {
-            0 => y * _lengthFullImage + x,
-            90 => 9120 + y - (x * _lengthFullImage),
-            180 => 9216 - (y * _lengthFullImage) - x,
-            270 => 25 - y + (x * _lengthFullImage),
-            _ => throw new Exception("Invalid rotation value: " + r)
-        };
-
+        #region Print Logic
         private static void PrintImage(int key, List<char> image, string description = "")
         {
             Console.WriteLine($"\nTile {key} ({description}):");
             for (var i = 1; i < image.Count + 1; i++)
             {
                 Console.Write(image[i - 1]);
-                if (i % LENGTH_IMAGE == 0)
+                if (i % LENGTH_INPUT_IMAGE == 0)
                 {
                     Console.WriteLine();
                 }
@@ -410,20 +377,22 @@ namespace AdventOfCode.Solutions.Year2020
         {
             Console.WriteLine("The full image (including borders):");
             var fullImages = _fullImage.Select(fi => fi.Image).ToList();
-            for (var y = 0; y < _lengthAllImages * LENGTH_IMAGE; y++)
+            for (var y = 0; y < _lengthAllImages * LENGTH_INPUT_IMAGE; y++)
             {
-                var listIndexY = y / LENGTH_IMAGE;
-                var listY = y % LENGTH_IMAGE;
-                for (var x = 0; x < _lengthAllImages * LENGTH_IMAGE; x++)
+                var listIndexY = y / LENGTH_INPUT_IMAGE;
+                var listY = y % LENGTH_INPUT_IMAGE;
+                for (var x = 0; x < _lengthAllImages * LENGTH_INPUT_IMAGE; x++)
                 {
-                    var listIndexX = x / LENGTH_IMAGE;
-                    var listX = x % LENGTH_IMAGE;
+                    var listIndexX = x / LENGTH_INPUT_IMAGE;
+                    var listX = x % LENGTH_INPUT_IMAGE;
                     Console.Write(fullImages[(listIndexY * _lengthAllImages + listIndexX)][CalcIndexForRotation(0, listX, listY)]);
                 }
                 Console.WriteLine();
             }
         }
+        #endregion
 
+        #region Initialize
         private void ParseInput()
         {
             var splitOn = base.Input.Contains("\r\n\r\n") ? "\r\n\r\n" : "\n\n";
@@ -445,5 +414,6 @@ namespace AdventOfCode.Solutions.Year2020
             using var reader = new StreamReader(stream);
             base.DebugInput = reader.ReadToEnd();
         }
+        #endregion
     }
 }
