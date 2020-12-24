@@ -42,7 +42,7 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day20Solution() : base(20, 2020, "")
         {
-            //SetDebugInput();
+            SetDebugInput();
             ParseInput();
 
             _lengthAllImages = base.DebugInput == null ? 12 : 3; // TODO: Resolve by code
@@ -68,7 +68,7 @@ namespace AdventOfCode.Solutions.Year2020
         {
             FillFullImage();
             TrimFullImage();
-            PrintFullImage(_trimmedFullImage);
+            //PrintFullImage(_trimmedFullImage);
             var rotated = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
             PrintFullImage(rotated);
             FindSeaMonsters();
@@ -77,7 +77,10 @@ namespace AdventOfCode.Solutions.Year2020
 
         private void FindSeaMonsters()
         {
+            // Not needed but for now ok
             var imageWithSeaMonsters = RotateTrimmedFullImageImage(_trimmedFullImage, 90);
+
+
         }
 
         private void TrimFullImage()
@@ -105,9 +108,7 @@ namespace AdventOfCode.Solutions.Year2020
 
                     var c = fullImages[(listIndexY * _lengthAllImages + listIndexX)][CalcIndexForRotation(0, listX, listY)];
                     _trimmedFullImage.Add(c);
-                    //Console.Write(c);
                 }
-                //Console.WriteLine();
             }
         }
 
@@ -119,80 +120,66 @@ namespace AdventOfCode.Solutions.Year2020
             var topLeftImageId = FindTopLeftStartingTile(imageSolves);
             _fullImage.Add((topLeftImageId, _images[topLeftImageId].Standard));
 
+            // Prepare a list of Image Ids which are solved
             var addedImages = new List<int>();
-            PrintImage(topLeftImageId, _images[topLeftImageId].Standard, "Top left");
 
             for (var i = 1; i < (_lengthAllImages * _lengthAllImages); i++)
             {
-                var currentCount = _fullImage.Count;
                 addedImages.Add(_fullImage.Last().ImageId);
-                PrintImage(_fullImage.Last().ImageId, _fullImage.Last().Image);
 
-                //var found = false;
-
-                ImageMatch previousImageSolve;
+                int previousImageId;
                 string borderToFind;
-                //int toRotate = 0;
                 Border borderToTake;
 
                 // If the next image to add is on a new y
                 if (i % _lengthAllImages == 0)
                 {
                     var (imageId, image) = _fullImage[i - _lengthAllImages];
+                    previousImageId = imageId;
                     borderToFind = GetBorderForImage(image, Border.Bottom);
-                    previousImageSolve = imageSolves[imageId].Find(i => !addedImages.Contains(i.ImageId) && (i.MatchedAtRotation == 180 || i.MatchedAtRotation == 0));
                     borderToTake = Border.Top;
-
-                    // Find the value to which the image should be rotated
-                    //toRotate = Math.Abs(180 - previousImageSolve.Rotation);
 
                 }
                 // If the next image to add is on the same y
                 else
                 {
                     var (imageId, image) = _fullImage.Last();
+                    previousImageId = imageId;
                     borderToFind = GetBorderForImage(image, Border.Right);
-                    previousImageSolve = imageSolves[imageId].Find(i => !addedImages.Contains(i.ImageId) && (i.MatchedAtRotation == 270 || i.MatchedAtRotation == 90));
                     borderToTake = Border.Left;
-
-                    // Find the value to which the image should be rotated
-                    //toRotate = Math.Abs(90 - previousImageSolve.Rotation);
                 }
 
-                // Om dit te fixen:
-                // Ga door alle nog-niet-solved solves in imageSolves[imageId] heen en ga door tot je de juiste border oplossing gevonden hebt
-
-                // Print current image
-                PrintImage(previousImageSolve.ImageId, _images[previousImageSolve.ImageId].Standard);
-
-                for(var r = 0; r < 360; r += 90)
+                var foundImage = false;
+                foreach(var possibleImage in imageSolves[previousImageId].Where(i => !addedImages.Contains(i.ImageId)))
                 {
-                    PrintImage(previousImageSolve.ImageId, _images[previousImageSolve.ImageId].Standard, "Standard PreRotate " + r);
-                    var standardImage = RotateImage(_images[previousImageSolve.ImageId].Standard, r);
-                    PrintImage(previousImageSolve.ImageId, standardImage, "Standard AfterRotate" + r);
-
-                    if (borderToFind == GetBorderForImage(standardImage, borderToTake))
+                    for (var r = 0; r < 360; r += 90)
                     {
-                        _fullImage.Add((previousImageSolve.ImageId, standardImage));
-                        break;
+                        var standardImage = RotateImage(_images[possibleImage.ImageId].Standard, r);
+                        if (borderToFind == GetBorderForImage(standardImage, borderToTake))
+                        {
+                            _fullImage.Add((possibleImage.ImageId, standardImage));
+                            foundImage = true;
+                            break;
+                        }
+
+                        var flippedImage = RotateImage(_images[possibleImage.ImageId].Flipped, r);
+                        if (borderToFind == GetBorderForImage(flippedImage, borderToTake))
+                        {
+                            _fullImage.Add((possibleImage.ImageId, flippedImage));
+                            foundImage = true;
+                            break;
+                        }
                     }
 
-                    PrintImage(previousImageSolve.ImageId, _images[previousImageSolve.ImageId].Flipped, "Flipped PreRotate " + r);
-                    var flippedImage = RotateImage(_images[previousImageSolve.ImageId].Flipped, r);
-                    PrintImage(previousImageSolve.ImageId, flippedImage, "Flipped AfterRotate " + r);
-
-                    if (borderToFind == GetBorderForImage(flippedImage, borderToTake))
+                    if(foundImage)
                     {
-                        _fullImage.Add((previousImageSolve.ImageId, flippedImage));
                         break;
                     }
                 }
 
-                
-                if(currentCount == _fullImage.Count)
+                if(!foundImage)
                 {
                     throw new Exception($"Something is going wrong in deciding the correct rotation for the current image.");
-
                 }
             }
 
