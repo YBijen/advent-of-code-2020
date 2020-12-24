@@ -42,13 +42,13 @@ namespace AdventOfCode.Solutions.Year2020
 
         public Day20Solution() : base(20, 2020, "")
         {
-            SetDebugInput();
+            //SetDebugInput();
             ParseInput();
 
             _lengthAllImages = (int)Math.Sqrt(_images.Count);
 
             // Set the Full Image Length by removing the borders
-            _lengthFullImage = (LENGTH_INPUT_IMAGE * _lengthAllImages) - (_lengthAllImages * 2); // Remove borders
+            _lengthFullImage = (LENGTH_INPUT_IMAGE * _lengthAllImages) - (_lengthAllImages * 2);
 
             if (base.DebugInput == null)
             {
@@ -79,49 +79,51 @@ namespace AdventOfCode.Solutions.Year2020
         {
             FillFullImage();
             TrimFullImage();
-            return FindSeaMonsters().ToString();
+            var amountOfSeaMonsters = CountSeaMonsters();
+            return (_trimmedFullImage.Count(tfi => tfi == '#') - (amountOfSeaMonsters * _seaMonsterCoords.Count)).ToString();
+
         }
 
-        private int FindSeaMonsters()
+        private int CountSeaMonsters()
         {
-            var count = 0;
-
-            for (var flip = 0; flip < 2; flip++)
+            // Go through all rotations to find the Sea Monster
+            // if none are found then flip the _trimmedFullImage, for me it was not needed
+            for (var r = 0; r < 360; r += 90)
             {
-                for (var r = 0; r < 360; r += 90)
-                {
-                    for (var y = 0; y < (_lengthFullImage - HEIGHT_SEA_MONSTER + 1); y++)
-                    {
-                        for (var x = 0; x < (_lengthFullImage - LENGTH_SEA_MONSTER + 1); x++)
-                        {
-                            var isSeaMonster = true;
-                            foreach (var smc in _seaMonsterCoords)
-                            {
-                                var result = _trimmedFullImage[CalcIndexForFullImageRotation(r, x + smc.X, y + Math.Abs(smc.Y))];
-                                if (result != '#')
-                                {
-                                    isSeaMonster = false;
-                                    break;
-                                }
-                            }
-                            if (isSeaMonster)
-                            {
-                                count++;
-                            }
-                        }
-                    }
-
-                    if (count > 0)
-                    {
-                        break;
-                    }
-                }
+                var count = CountSeaMonsterInRotation(r, false);
                 if(count > 0)
                 {
-                    break;
+                    return count;
                 }
             }
-            return _trimmedFullImage.Count(tfi => tfi == '#') - (count * _seaMonsterCoords.Count);
+
+            throw new Exception("SeaMonsters are not found yet, try flipping the image");
+        }
+
+        private int CountSeaMonsterInRotation(int rotation, bool flipped)
+        {
+            var seaMonsterCount = 0;
+            for (var y = 0; y < (_lengthFullImage - HEIGHT_SEA_MONSTER + 1); y++)
+            {
+                for (var x = 0; x < (_lengthFullImage - LENGTH_SEA_MONSTER + 1); x++)
+                {
+                    var isSeaMonster = true;
+                    foreach (var smc in _seaMonsterCoords)
+                    {
+                        var result = _trimmedFullImage[CalcIndexForFullImageRotation(rotation, x + smc.X, y + Math.Abs(smc.Y))];
+                        if (result != '#')
+                        {
+                            isSeaMonster = false;
+                            break;
+                        }
+                    }
+                    if (isSeaMonster)
+                    {
+                        seaMonsterCount++;
+                    }
+                }
+            }
+            return seaMonsterCount;
         }
 
         private void TrimFullImage()
