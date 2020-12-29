@@ -1,46 +1,36 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace AdventOfCode.Solutions.Year2020
 {
     class Day22 : ASolution
     {
-        private Queue<long> _cardsPlayer1 = new Queue<long>();
-        private Queue<long> _cardsPlayer2 = new Queue<long>();
-
         public Day22() : base(22, 2020, "")
         {
-            //SetDebugInput();
-            ParseCardsForPlayersFromInput();
+            SetDebugInput();
         }
 
         protected override string SolvePartOne()
         {
-            while(_cardsPlayer1.Count > 0 && _cardsPlayer2.Count > 0)
+            var (cardsPlayer1, cardsPlayer2) = ParseCardsForPlayersFromInput();
+
+            while(cardsPlayer1.Count > 0 && cardsPlayer2.Count > 0)
             {
-                var cardPlayer1 = _cardsPlayer1.Dequeue();
-                var cardPlayer2 = _cardsPlayer2.Dequeue();
+                var cardPlayer1 = cardsPlayer1.Dequeue();
+                var cardPlayer2 = cardsPlayer2.Dequeue();
                 if(cardPlayer1 > cardPlayer2)
                 {
-                    _cardsPlayer1.Enqueue(cardPlayer1);
-                    _cardsPlayer1.Enqueue(cardPlayer2);
+                    cardsPlayer1.Enqueue(cardPlayer1);
+                    cardsPlayer1.Enqueue(cardPlayer2);
                 }
                 else
                 {
-                    _cardsPlayer2.Enqueue(cardPlayer2);
-                    _cardsPlayer2.Enqueue(cardPlayer1);
+                    cardsPlayer2.Enqueue(cardPlayer2);
+                    cardsPlayer2.Enqueue(cardPlayer1);
                 }
             }
 
-            var winningCards = _cardsPlayer2.Count > 0 ? _cardsPlayer2 : _cardsPlayer1;
-            var result = 0L;
-            for(var i = winningCards.Count; i > 0; i--)
-            {
-                result += winningCards.Dequeue() * i;
-            }
-            return result.ToString();
+            return CalculateScore(cardsPlayer1, cardsPlayer2).ToString();
         }
 
         protected override string SolvePartTwo()
@@ -48,17 +38,33 @@ namespace AdventOfCode.Solutions.Year2020
             return null;
         }
 
-        private void ParseCardsForPlayersFromInput()
+        private long CalculateScore(Queue<long> cardsPlayer1, Queue<long> cardsPlayer2)
         {
+            var winningCards = cardsPlayer2.Count > 0 ? cardsPlayer2 : cardsPlayer1;
+            var result = 0L;
+            for (var i = winningCards.Count; i > 0; i--)
+            {
+                result += winningCards.Dequeue() * i;
+            }
+            return result;
+        }
+
+        private (Queue<long>, Queue<long>) ParseCardsForPlayersFromInput()
+        {
+            var cardsPlayer1 = new Queue<long>();
+            var cardsPlayer2 = new Queue<long>();
+
             var players = base.Input.Split("\n\n");
             foreach(var card in players[0].SplitByNewline().Skip(1).Select(card => long.Parse(card)))
             {
-                _cardsPlayer1.Enqueue(card);
+                cardsPlayer1.Enqueue(card);
             }
             foreach (var card in players[1].SplitByNewline().Skip(1).Select(card => long.Parse(card)))
             {
-                _cardsPlayer2.Enqueue(card);
+                cardsPlayer2.Enqueue(card);
             }
+
+            return (cardsPlayer1, cardsPlayer2);
         }
 
         private void SetDebugInput()
