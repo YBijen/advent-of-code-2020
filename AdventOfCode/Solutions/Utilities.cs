@@ -32,6 +32,15 @@ namespace AdventOfCode.Solutions
 
         }
 
+        public static Queue<T> ToQueue<T>(this IEnumerable<T> list)
+        {
+            var queue = new Queue<T>();
+            foreach (var item in list)
+            {
+                queue.Enqueue(item);
+            }
+            return queue;
+        }
 
         public static int MinOfMany(params int[] items)
         {
