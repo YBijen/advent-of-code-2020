@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
+using AdventOfCode.Solutions.Year2020.Day22.Models;
 
 namespace AdventOfCode.Solutions.Year2020
 {
-    class Day22 : ASolution
+    class Day22Solution : ASolution
     {
-        public Day22() : base(22, 2020, "")
+        public Day22Solution() : base(22, 2020, "")
         {
-            SetDebugInput();
+            //SetDebugInput();
         }
 
         protected override string SolvePartOne()
@@ -35,7 +36,65 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartTwo()
         {
-            return null;
+            var (cardsPlayer1, cardsPlayer2) = ParseCardsForPlayersFromInput();
+            PlayGame(ref cardsPlayer1, ref cardsPlayer2, new HashSet<string>());
+            return CalculateScore(cardsPlayer1, cardsPlayer2).ToString();
+        }
+
+        private void PlayGame(ref Queue<long> cardsPlayer1, ref Queue<long> cardsPlayer2, HashSet<string> history)
+        {
+            while (cardsPlayer1.Count > 0 && cardsPlayer2.Count > 0)
+            {
+                // Perform 
+                var id = CardsToString(cardsPlayer1, cardsPlayer2);
+                if (!history.Contains(id))
+                {
+                    history.Add(id);
+                }
+                else
+                {
+                    // To prevent an infinite loop player 1 won, we clean the cards of player 2
+                    cardsPlayer2 = new Queue<long>();
+                    break;
+                }
+
+                var cardPlayer1 = cardsPlayer1.Dequeue();
+                var cardPlayer2 = cardsPlayer2.Dequeue();
+
+                if (cardsPlayer1.Count >= cardPlayer1 && cardsPlayer2.Count >= cardPlayer2)
+                {
+                    var winnerSubGame = PlaySubGame(cardsPlayer1.Take((int)cardPlayer1).ToQueue(), cardsPlayer2.Take((int)cardPlayer2).ToQueue());
+                    if (winnerSubGame == Player.One)
+                    {
+                        cardsPlayer1.Enqueue(cardPlayer1);
+                        cardsPlayer1.Enqueue(cardPlayer2);
+                    }
+                    else
+                    {
+                        cardsPlayer2.Enqueue(cardPlayer2);
+                        cardsPlayer2.Enqueue(cardPlayer1);
+                    }
+                }
+                else if (cardPlayer1 > cardPlayer2)
+                {
+                    cardsPlayer1.Enqueue(cardPlayer1);
+                    cardsPlayer1.Enqueue(cardPlayer2);
+                }
+                else
+                {
+                    cardsPlayer2.Enqueue(cardPlayer2);
+                    cardsPlayer2.Enqueue(cardPlayer1);
+                }
+            }   
+        }
+
+        private string CardsToString(Queue<long> cardsPlayer1, Queue<long> cardsPlayer2) =>
+            $"{string.Join("|", cardsPlayer1)}_{string.Join("|", cardsPlayer2)}";
+
+        private Player PlaySubGame(Queue<long> cardsPlayer1, Queue<long> cardsPlayer2)
+        {
+            PlayGame(ref cardsPlayer1, ref cardsPlayer2, new HashSet<string>());
+            return cardsPlayer1.Count > 0 ? Player.One : Player.Two;
         }
 
         private long CalculateScore(Queue<long> cardsPlayer1, Queue<long> cardsPlayer2)
@@ -51,19 +110,9 @@ namespace AdventOfCode.Solutions.Year2020
 
         private (Queue<long>, Queue<long>) ParseCardsForPlayersFromInput()
         {
-            var cardsPlayer1 = new Queue<long>();
-            var cardsPlayer2 = new Queue<long>();
-
             var players = base.Input.Split("\n\n");
-            foreach(var card in players[0].SplitByNewline().Skip(1).Select(card => long.Parse(card)))
-            {
-                cardsPlayer1.Enqueue(card);
-            }
-            foreach (var card in players[1].SplitByNewline().Skip(1).Select(card => long.Parse(card)))
-            {
-                cardsPlayer2.Enqueue(card);
-            }
-
+            var cardsPlayer1 = players[0].SplitByNewline().Skip(1).Select(card => long.Parse(card)).ToQueue();
+            var cardsPlayer2 = players[1].SplitByNewline().Skip(1).Select(card => long.Parse(card)).ToQueue();
             return (cardsPlayer1, cardsPlayer2);
         }
 
@@ -83,6 +132,16 @@ namespace AdventOfCode.Solutions.Year2020
                 "4\n" +
                 "7\n" +
                 "10";
+
+            base.DebugInput = "" +
+                "Player 1:\n" +
+                "43\n" +
+                "19\n" +
+                "\n" +
+                "Player 2:\n" +
+                "2\n" +
+                "29\n" +
+                "14";
         }
     }
 }
