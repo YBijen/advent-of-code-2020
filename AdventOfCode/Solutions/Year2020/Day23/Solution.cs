@@ -2,69 +2,106 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdventOfCode.Solutions.Year2020
 {
     class Day23 : ASolution
     {
         const int CUPS_TO_TAKE = 3;
-        const int LOOPS = 8;
 
         public Day23() : base(23, 2020, "")
         {
-            base.DebugInput = "389125467";
+            AssertPartOne();
         }
 
-        protected override string SolvePartOne()
+        protected override string SolvePartOne() => PlayGame(ParseInput(), 100);
+
+        private string PlayGame(List<int> cups, int moves)
         {
-
-            var cups = ParseInput();
             var currentCupIndex = 0;
-            
-            Console.WriteLine($"Round 0: " + string.Join(" ", cups));
 
-            for (var i = 1; i <= LOOPS; i++)
+            var indexModifier = 0;
+
+            for (var i = 1; i <= moves; i++)
             {
-                var currentCup = cups[currentCupIndex++];
 
-                var nextDest = GetNextDestinationCup(cups, currentCup);
-                var cupsToTake = GetCupsToTake(cups, currentCup);
-                foreach (var cupToTake in cupsToTake)
+                cups = cups.Skip(indexModifier).Union(cups.Take(indexModifier)).ToList();
+                indexModifier = 0;
+                Console.WriteLine($"Round {i} start: " + string.Join(" ", cups));
+
+                var currentCup = cups[currentCupIndex];
+
+
+
+                var removedCups = GetAndRemoveNextCups(cups, currentCup);
+                var destinationCup = GetNextDestinationCup(cups, currentCup);
+
+                Console.WriteLine($"Current cup: {currentCup}; Destination cup: {destinationCup}");
+
+                var destinationIndex = cups.IndexOf(destinationCup) + 1;
+                for (var j = 0; j < removedCups.Count; j++)
                 {
-                    cups.Remove(cupToTake);
+                    cups.Insert(destinationIndex + j, removedCups[j]);
                 }
 
-                var destinationIndex = cups.IndexOf(nextDest) + 1;
-                for(var j = 0; j < cupsToTake.Count; j++)
+                Console.WriteLine("Moving: " + string.Join(" ", removedCups));
+
+
+
+
+                if (currentCupIndex > destinationIndex)
                 {
-                    cups.Insert(destinationIndex + j, cupsToTake[j]);
+                    indexModifier = base.Input.Length - currentCupIndex > 3 ? 3 : base.Input.Length - currentCupIndex - 1;
+                    //indexModifier = 3;
                 }
 
-                Console.WriteLine($"Round {i}: " + string.Join(" ", cups));
-                Console.WriteLine($"Current cup: {currentCup}; Destination cup: {nextDest}");
+                Console.WriteLine($"[CURRENT IDX] {currentCupIndex} || [DEST IDX] {destinationIndex} || {indexModifier}");
+                Console.WriteLine($"Round {i} finish: " + string.Join(" ", cups));
+
+
+
+
+                if (++currentCupIndex == 9)
+                {
+                    currentCupIndex = 0;
+                }
+                Console.WriteLine();
             }
-            return null;
+
+            var indexOfLabel1 = cups.IndexOf(1);
+            return string.Join("", cups.Skip(indexOfLabel1 + 1).Union(cups.Take(indexOfLabel1)));
         }
 
-        private List<int> GetCupsToTake(List<int> cups, int currentCup)
+        private List<int> GetAndRemoveNextCups(List<int> cups, int currentCup)
         {
             var currentCupIndex = cups.IndexOf(currentCup);
-            return cups.Skip(currentCupIndex + 1).Take(CUPS_TO_TAKE).ToList();
+            var takenCups = cups.Skip(currentCupIndex + 1).Take(CUPS_TO_TAKE).ToList();
+
+            // Fill cups to take from the start if some are missing
+            var i = 0;
+            while(takenCups.Count != CUPS_TO_TAKE)
+            {
+                takenCups.Add(cups[i++]);
+            }
+
+            takenCups.ForEach(tc => cups.Remove(tc));
+            return takenCups;
         }
 
         private int GetNextDestinationCup(List<int> cups, int currentCup)
         {
             var destinationCup = currentCup - 1;
-            var cupsToTake = GetCupsToTake(cups, currentCup);
-            while (true)
+            while(true)
             {
-                if(cupsToTake.Contains(destinationCup))
-                {
-                    destinationCup--;
-                }
-                else
+                if(cups.Contains(destinationCup))
                 {
                     return destinationCup;
+                }
+
+                if(--destinationCup <= 0)
+                {
+                    destinationCup = 9;
                 }
             }
         }
@@ -72,6 +109,14 @@ namespace AdventOfCode.Solutions.Year2020
         protected override string SolvePartTwo()
         {
             return null;
+        }
+
+        private void AssertPartOne()
+        {
+            base.DebugInput = "389125467";
+            Assert.AreEqual("92658374", PlayGame(ParseInput(), 10));
+            Assert.AreEqual("67384529", PlayGame(ParseInput(), 100));
+            base.DebugInput = null;
         }
 
         private List<int> ParseInput() => base.Input.Select(c => int.Parse(c.ToString())).ToList();
