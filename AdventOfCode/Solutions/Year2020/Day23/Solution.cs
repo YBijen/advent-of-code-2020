@@ -16,21 +16,18 @@ namespace AdventOfCode.Solutions.Year2020
 
         protected override string SolvePartOne() => PlayGame(ParseInput(), 100);
 
-        protected override string SolvePartTwo()
-        {
-            return null;
-        }
+        protected override string SolvePartTwo() => null;
 
         private string PlayGame(LinkedList<int> cups, int moves)
         {
             var currentCup = cups.First;
             for (var i = 1; i <= moves; i++)
             {
-                var removedCups = new List<int>();
+                var removedCups = new List<int>(CUPS_TO_TAKE);
                 for (var j = 0; j < CUPS_TO_TAKE; j++)
                 {
-                    removedCups.Insert(0, currentCup.Next?.Value ?? cups.First.Value);
-                    cups.Remove(currentCup?.Next ?? cups.First);
+                    removedCups.Insert(0, currentCup.NextOrFirst().Value);
+                    cups.Remove(currentCup.NextOrFirst());
                 }
 
                 var destinationCup = GetNextDestinationCup(removedCups, currentCup.Value);
@@ -38,18 +35,10 @@ namespace AdventOfCode.Solutions.Year2020
 
                 removedCups.ForEach(cup => cups.AddAfter(destinationCupNode ?? cups.First, cup));
 
-                currentCup = currentCup.Next ?? cups.First;
+                currentCup = currentCup.NextOrFirst();
             }
 
             return CreateOutputForResult(cups);
-        }
-
-
-        private string CreateOutputForResult(LinkedList<int> cups)
-        {
-            var cupsList = cups.ToList();
-            var indexOfLabel1 = cupsList.IndexOf(1);
-            return string.Join("", cupsList.Skip(indexOfLabel1 + 1).Union(cupsList.Take(indexOfLabel1)));
         }
 
         private int GetNextDestinationCup(List<int> removedCups, int currentCup)
@@ -67,6 +56,13 @@ namespace AdventOfCode.Solutions.Year2020
                     return destinationCupValue;
                 }
             }
+        }
+
+        private string CreateOutputForResult(LinkedList<int> cups)
+        {
+            var cupsList = cups.ToList();
+            var indexOfLabel1 = cupsList.IndexOf(1);
+            return string.Join("", cupsList.Skip(indexOfLabel1 + 1).Union(cupsList.Take(indexOfLabel1)));
         }
 
         private void AssertPartOne()
