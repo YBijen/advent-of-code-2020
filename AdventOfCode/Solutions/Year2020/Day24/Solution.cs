@@ -9,27 +9,22 @@ namespace AdventOfCode.Solutions.Year2020
     {
         public Day24Solution() : base(24, 2020, "")
         {
-            //SetDebugInput();
+            SetDebugInput();
         }
 
-        protected override string SolvePartOne()
-        {
-            var flippedTiles = FlipTiles(ParseInput());
-            var blackTiles = flippedTiles.Count(tile => tile.Value % 2 != 0);
-            return blackTiles.ToString();
-        }
+        protected override string SolvePartOne() => GetFlippedTiles(ParseInput()).Count.ToString();
 
         protected override string SolvePartTwo()
         {
             return null;
         }
 
-        private Dictionary<(int X, int Y, int Z), int> FlipTiles(List<List<Direction>> tilePaths)
+        private List<(int X, int Y, int Z)> GetFlippedTiles(List<List<Direction>> tilePaths)
         {
             var result = new Dictionary<(int X, int Y, int Z), int>();
             foreach(var tilePathDirections in tilePaths)
             {
-                var currentTile = new Coordinate() { X = 3, Y = 3, Z = 3 };
+                var currentTile = new Coordinate();
                 foreach(var direction in tilePathDirections)
                 {
                     switch(direction)
@@ -61,7 +56,6 @@ namespace AdventOfCode.Solutions.Year2020
                         default:
                             throw new Exception("This should not happen.");
                     }
-                    //Console.WriteLine($"Current Tile: {currentTile.X},{currentTile.Y},{currentTile.Z}. After Direction: {direction.ToString()}");
                 }
                 var foundTile = (currentTile.X, currentTile.Y, currentTile.Z);
 
@@ -74,7 +68,7 @@ namespace AdventOfCode.Solutions.Year2020
                     result.Add(foundTile, 1);
                 }
             }
-            return result;
+            return result.Where(tile => tile.Value % 2 != 0).Select(tile => tile.Key).ToList();
         }
 
         private List<List<Direction>> ParseInput()
