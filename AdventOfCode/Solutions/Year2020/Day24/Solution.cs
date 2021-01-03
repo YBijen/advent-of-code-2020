@@ -10,9 +10,11 @@ namespace AdventOfCode.Solutions.Year2020
         const int DAYS = 100;
         private HashSet<Coordinate> _flippedTiles;
 
+        private readonly Direction[] _directionArray = Utilities.GetEnumAsArray<Direction>();
+
         public Day24Solution() : base(24, 2020, "")
         {
-            SetDebugInput();
+            //SetDebugInput();
         }
 
         protected override string SolvePartOne() => GetFlippedTiles(ParseInput()).Count.ToString();
@@ -22,97 +24,58 @@ namespace AdventOfCode.Solutions.Year2020
             _flippedTiles = GetFlippedTiles(ParseInput()).ToHashSet();
             for (var i = 1; i <= DAYS; i++)
             {
-                var (minimum, maximum) = GetFloorBorders();
                 var newFlippedTiles = new List<Coordinate>(_flippedTiles);
-                for (var x = minimum.X; x <= maximum.X; x++)
+                foreach(var currentTile in GetTilesToCheck())
                 {
-                    for (var y = minimum.Y; y <= maximum.Y; y++)
+                    var amountOfFlippedNeighbours = CountFlippedNeighbours(currentTile);
+                    if (_flippedTiles.Contains(currentTile))
                     {
-                        for (var z = minimum.Z; z <= maximum.Z; z++)
+                        if (amountOfFlippedNeighbours == 0 || amountOfFlippedNeighbours > 2)
                         {
-                            var currentTile = new Coordinate(x, y, z);
-                            var amountOfFlippedNeighbours = CountFlippedNeighbours(currentTile);
-                            if(_flippedTiles.Contains(currentTile))
-                            {
-                                if(amountOfFlippedNeighbours == 0 || amountOfFlippedNeighbours > 2)
-                                {
-                                    newFlippedTiles.Remove(currentTile);
-                                }
-                            }
-                            else
-                            {
-                                if(amountOfFlippedNeighbours == 2)
-                                {
-                                    newFlippedTiles.Add(currentTile);
-                                }
-                            }
+                            newFlippedTiles.Remove(currentTile);
+                        }
+                    }
+                    else
+                    {
+                        if (amountOfFlippedNeighbours == 2)
+                        {
+                            newFlippedTiles.Add(currentTile);
                         }
                     }
                 }
                 _flippedTiles = new HashSet<Coordinate>(newFlippedTiles);
-                Console.WriteLine($"Flipped tiles after day {i}: {_flippedTiles.Count}");
             }
             return _flippedTiles.Count.ToString();
+        }
+
+        private List<Coordinate> GetTilesToCheck()
+        {
+            var tilesToCheck = new List<Coordinate>();
+            foreach(var tile in _flippedTiles)
+            {
+                tilesToCheck.Add(tile);
+                foreach(var direction in _directionArray)
+                {
+                    tilesToCheck.Add(GetTileInDirection(direction, tile));
+                }
+            }
+
+            return tilesToCheck.Distinct().ToList();
         }
 
         private int CountFlippedNeighbours(Coordinate tile)
         {
             var flippedNeighbours = 0;
 
-            foreach(var direction in (Direction[])Enum.GetValues(typeof(Direction)))
+            foreach(var direction in _directionArray)
             {
-                var neighbour = GetTileInDirection(direction, tile);
-                if(_flippedTiles.Contains(neighbour))
+                if(_flippedTiles.Contains(GetTileInDirection(direction, tile)))
                 {
                     flippedNeighbours++;
                 }
             }
 
             return flippedNeighbours;
-        }
-
-        private (Coordinate min, Coordinate max) GetFloorBorders()
-        {
-            Coordinate minimum = new Coordinate(), maximum = new Coordinate();
-
-            foreach(var tile in _flippedTiles)
-            {
-                if(tile.X < minimum.X)
-                {
-                    minimum.X = tile.X;
-                }
-                if (tile.X > maximum.X)
-                {
-                    maximum.X = tile.X;
-                }
-
-                if (tile.Y < minimum.Y)
-                {
-                    minimum.Y = tile.Y;
-                }
-                if (tile.Y > maximum.Y)
-                {
-                    maximum.Y = tile.Y;
-                }
-
-                if (tile.Z < minimum.Z)
-                {
-                    minimum.Z = tile.Z;
-                }
-                if (tile.Z > maximum.Z)
-                {
-                    maximum.Z = tile.Z;
-                }
-            }
-
-            minimum.X--;
-            minimum.Y--;
-            minimum.Z--;
-            maximum.X++;
-            maximum.Y++;
-            maximum.Z++;
-
-            return (minimum, maximum);
         }
 
         private List<Coordinate> GetFlippedTiles(List<List<Direction>> tilePaths)

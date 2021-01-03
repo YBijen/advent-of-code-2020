@@ -12,6 +12,8 @@ namespace AdventOfCode.Solutions
 
     public static class Utilities
     {
+        public static T[] GetEnumAsArray<T>() => (T[])Enum.GetValues(typeof(T));
+
         public static LinkedListNode<T> NextOrFirst<T>(this LinkedListNode<T> node) => node.Next ?? node.List.First;
 
         public static int[] ToIntArray(this string str, string delimiter = "")
